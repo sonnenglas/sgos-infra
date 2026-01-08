@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: glitchtip
+      POSTGRES_DB: glitchtip
+    volumes:
+      - glitchtip-postgres:/var/lib/postgresql/data
+    networks:
+      - glitchtip
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    networks:
+      - glitchtip
+
+  web:
+    image: glitchtip/glitchtip
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: "postgres://glitchtip:glitchtip@postgres:5432/glitchtip"
+      SECRET_KEY: "4de7e3f8534cae328a9e44ab7a4b1c261faa0aa7f0f3baad740bf29b8adee3b5"
+      PORT: "8000"
+      EMAIL_URL: "consolemail://"
+      GLITCHTIP_DOMAIN: "https://glitchtip.sgl.as"
+      DEFAULT_FROM_EMAIL: "glitchtip@sgl.as"
+      CELERY_WORKER_AUTOSCALE: "1,3"
+      CELERY_WORKER_MAX_TASKS_PER_CHILD: "10000"
+      REDIS_URL: "redis://redis:6379/0"
+    ports:
+      - "8000:8000"
+    networks:
+      - glitchtip
+
+  worker:
+    image: glitchtip/glitchtip
+    restart: unless-stopped
+    command: ./bin/run-celery-with-beat.sh
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: "postgres://glitchtip:glitchtip@postgres:5432/glitchtip"
+      SECRET_KEY: "4de7e3f8534cae328a9e44ab7a4b1c261faa0aa7f0f3baad740bf29b8adee3b5"
+      PORT: "8000"
+      EMAIL_URL: "consolemail://"
+      GLITCHTIP_DOMAIN: "https://glitchtip.sgl.as"
+      DEFAULT_FROM_EMAIL: "glitchtip@sgl.as"
+      CELERY_WORKER_AUTOSCALE: "1,3"
+      CELERY_WORKER_MAX_TASKS_PER_CHILD: "10000"
+      REDIS_URL: "redis://redis:6379/0"
+    networks:
+      - glitchtip
+
+  migrate:
+    image: glitchtip/glitchtip
+    restart: "no"
+    depends_on:
+      - postgres
+    command: ./manage.py migrate
+    environment:
+      DATABASE_URL: "postgres://glitchtip:glitchtip@postgres:5432/glitchtip"
+      SECRET_KEY: "4de7e3f8534cae328a9e44ab7a4b1c261faa0aa7f0f3baad740bf29b8adee3b5"
+    networks:
+      - glitchtip
+
+volumes:
+  glitchtip-postgres:
+
+networks:
+  glitchtip:
+    driver: bridge
