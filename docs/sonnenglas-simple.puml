@@ -1,0 +1,88 @@
+@startuml Sonnenglas - Business Systems
+!theme plain
+skinparam backgroundColor white
+skinparam roundCorner 20
+skinparam componentStyle rectangle
+
+title **Sonnenglas Business Systems**\nAll systems communicate via APIs
+
+' --- Customer Touchpoints ---
+rectangle "Customer Touchpoints" as touch #E3F2FD {
+    (Website) as web
+    (Partner Portal) as partner
+    (Helpdesk) as helpdesk
+}
+
+' --- Core Operations ---
+rectangle "Sales & Fulfillment" as sales #E8F5E9 {
+    (Xhosa) as xhosa
+    note right of xhosa: Orders, Customers\nInvoicing, CRM
+
+    (Ufudu) as ufudu
+    note right of ufudu: Warehouse\nPick & Pack
+}
+
+rectangle "Products & Production" as prod #FFF3E0 {
+    (Beanstock) as beanstock
+    note right of beanstock: Products, Inventory\nStock Movements
+
+    (MRP) as mrp
+    note right of mrp: Manufacturing\nProduction Planning
+}
+
+rectangle "Finance & Documents" as finance #FFF8E1 {
+    (Docflow) as docflow
+    note right of docflow: Incoming Documents\nInvoice Processing
+
+    (Precounting) as precounting
+    note right of precounting: Accounting\nBank Reconciliation
+}
+
+' --- Central Coordination ---
+rectangle "**Human in the Soup**\n\nCentral Task Hub\nWhere all systems report\nwhen humans need to decide" as hits #FFCDD2
+
+' --- Intelligence ---
+rectangle "Intelligence" as intel #E1BEE7 {
+    (Anansi) as anansi
+    note right of anansi: AI Assistant\nInternal & Customer
+
+    (Ikhaya) as ikhaya
+    note right of ikhaya: Knowledge Base\nDocumentation
+}
+
+' --- Shared Services ---
+rectangle "Shared Services" as shared #ECEFF1 {
+    (Directory) as dir
+    (Message Bus) as bus
+}
+
+rectangle "Operations" as ops #F5F5F5 {
+    (Ctrl) as ctrl
+    note right of ctrl: Monitoring\nBackups, Alerts
+}
+
+' --- Connections ---
+web --> xhosa
+partner --> xhosa
+helpdesk --> anansi
+
+xhosa <--> beanstock : stock & products
+xhosa --> ufudu : orders to fulfill
+ufudu --> beanstock : movements
+beanstock <--> mrp : production
+
+xhosa --> precounting : sales
+docflow <--> precounting : matching
+
+anansi --> xhosa : lookups
+anansi <--> ikhaya
+
+' All to Human in the Soup
+xhosa --> hits
+beanstock --> hits
+docflow --> hits
+precounting --> hits
+mrp --> hits
+ufudu --> hits
+
+@enduml

@@ -1,0 +1,121 @@
+@startuml Sonnenglas Systems Architecture
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam padding 10
+skinparam roundCorner 15
+
+title Sonnenglas Systems Overview
+
+' External interfaces at the top
+package "External Channels" {
+    [Website] as web #LightBlue
+    [Partner Portal] as partner #LightBlue
+    [Helpdesk] as helpdesk #LightBlue
+}
+
+' Core business systems
+package "Business Operations" {
+    [Xhosa\n---\nSales & Orders\nCustomer Data\nInvoicing] as xhosa #LightGreen
+
+    [Beanstock\n---\nProduct Management\nInventory\nStock Movements] as beanstock #LightGreen
+
+    [Ufudu\n---\nPick & Pack\nFulfillment\nWarehouse Ops] as ufudu #LightGreen
+
+    [MRP\n---\nManufacturing\nProduction Planning\nWork Orders] as mrp #LightGreen
+}
+
+package "Finance & Documents" {
+    [Docflow\n---\nIncoming Documents\nInvoice Processing\nContract Management] as docflow #LightYellow
+
+    [Precounting\n---\nAccounting\nBank Transactions\nVAT & DATEV Export] as precounting #LightYellow
+}
+
+' Central coordination
+package "Coordination" #LightCoral {
+    [Human in the Soup\n---\nTask Management\nProcess Orchestration\nHuman Decisions] as hits
+}
+
+' AI and Knowledge
+package "Intelligence & Knowledge" {
+    [Anansi\n---\nAI Assistant\nCustomer Support\nInternal Help] as anansi #Plum
+
+    [Ikhaya\n---\nKnowledge Base\nDocumentation\nCompany Wiki] as ikhaya #Plum
+}
+
+' Shared infrastructure
+package "Shared Services" #WhiteSmoke {
+    [Directory\n---\nUser Management\nTeam Structure] as directory
+
+    [Message Bus\n---\nEvent Distribution\nAsync Communication] as messagebus
+}
+
+' Monitoring
+package "Operations" {
+    [Ctrl\n---\nMonitoring\nBackups\nError Tracking] as ctrl #LightGray
+}
+
+' --- Relationships ---
+
+' External to core
+web --> xhosa : orders
+partner --> xhosa : B2B orders
+helpdesk --> anansi : AI assist
+
+' Core business flow
+xhosa --> ufudu : fulfillment\norders
+xhosa --> beanstock : stock\nqueries
+beanstock <--> mrp : production\n& inventory
+ufudu --> beanstock : stock\nmovements
+mrp --> beanstock : finished\ngoods
+
+' Finance connections
+xhosa --> precounting : sales data
+docflow <--> precounting : invoice\nmatching
+docflow --> hits : approval\nrequests
+
+' Human in the Soup - central coordination
+xhosa --> hits : exceptions
+beanstock --> hits : low stock\nalerts
+precounting --> hits : review\nrequests
+mrp --> hits : production\ndecisions
+ufudu --> hits : issues
+
+' AI connections
+anansi --> xhosa : order\nlookup
+anansi --> beanstock : product\ninfo
+anansi <--> ikhaya : knowledge
+helpdesk <--> xhosa : customer\ndata
+
+' Shared services - all systems use these
+directory -[hidden]-> messagebus
+messagebus .[#gray,dashed].> xhosa : events
+messagebus .[#gray,dashed].> beanstock : events
+messagebus .[#gray,dashed].> precounting : events
+messagebus .[#gray,dashed].> docflow : events
+
+' Monitoring
+ctrl .[#gray,dotted].> xhosa
+ctrl .[#gray,dotted].> beanstock
+ctrl .[#gray,dotted].> docflow
+
+note bottom of directory
+  All systems authenticate
+  users via Directory API
+end note
+
+note bottom of messagebus
+  Events: order.created,
+  stock.low, invoice.received,
+  payment.matched, etc.
+end note
+
+note right of hits
+  Central hub where
+  all systems report
+  when human input
+  is needed
+end note
+
+@enduml
