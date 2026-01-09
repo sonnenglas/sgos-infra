@@ -1,5 +1,56 @@
 # Architecture Overview
 
+## Database Strategy
+
+**Decision:** Every app gets its own Postgres instance.
+
+**Why:**
+
+1. **Isolation** - One app's database crash doesn't affect others
+2. **Version flexibility** - App A can use Postgres 16, App B can use Postgres 18
+3. **Portability** - Each app is a self-contained unit, easy to move between servers
+4. **Simpler backups** - Backup/restore per app, not "extract one app from shared DB"
+5. **Security** - No risk of one app accessing another's data
+6. **Resource overhead is minimal** - ~100-200MB RAM per idle instance, negligible with 32GB available
+
+**Trade-off accepted:** Cannot do direct SQL joins across apps. Solved via analytics layer (see below).
+
+## Analytics Strategy
+
+For company-wide analytics and cross-app queries:
+
+**Approach:** Read-only analytics database (data warehouse pattern)
+
+```
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│  Xhosa  │  │Beanstock│  │ Docflow │  ... (all apps)
+│Postgres │  │Postgres │  │Postgres │
+└────┬────┘  └────┬────┘  └────┬────┘
+     │            │            │
+     └────────────┼────────────┘
+                  │ nightly sync (cron)
+                  ▼
+          ┌──────────────┐
+          │  Analytics   │
+          │  Postgres    │  (read-only replica)
+          └──────┬───────┘
+                 │
+                 ▼
+          ┌──────────────┐
+          │   Metabase   │  (dashboards, queries)
+          └──────────────┘
+```
+
+**Options (choose later based on needs):**
+
+| Option | Complexity | Best For |
+|--------|------------|----------|
+| Metabase connecting to each DB | Low | Simple dashboards |
+| Nightly sync to analytics DB | Medium | Cross-app queries, historical data |
+| Real-time replication (Postgres logical replication) | High | Up-to-the-minute analytics |
+
+**For now:** Not implemented. Add when analytics needs arise.
+
 ## Network Topology
 
 ```
