@@ -1,0 +1,14 @@
+# Terraform state (contains sensitive data)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Variables file with secrets
+terraform.tfvars
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Lock file should be committed
+!.terraform.lock.hcl

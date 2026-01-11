@@ -1,6 +1,6 @@
 # Hornbill Server Setup
 
-Base configuration for the Sonnenglas App Server before Dokploy/Coolify installation.
+Base configuration for the Sonnenglas App Server.
 
 ## Server Details
 
@@ -106,14 +106,17 @@ NTP: active, synchronized
 
 ```
 /srv/
-├── apps/                    # Reserved for Dokploy/Coolify
-├── data/                    # Persistent data volumes
-│   ├── postgres/
-│   ├── redis/
-│   └── files/               # Uploaded files, documents
-├── backups/                 # Local backup staging
-│   └── daily/
-└── config/                  # App configs (if needed outside containers)
+├── infra/                   # Infrastructure services
+│   ├── traefik/             # Reverse proxy
+│   └── cloudflared/         # Cloudflare Tunnel
+└── apps/                    # SGOS applications
+    └── sgos-<name>/
+        ├── app.json         # App metadata
+        ├── docker-compose.yml
+        ├── .env             # Secrets
+        ├── src/             # Source code
+        ├── data/            # Persistent data
+        └── backup/          # Backup output
 ```
 
 Owner: stefan:stefan
@@ -151,18 +154,16 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ---
 
-## What's NOT Configured (Dokploy/Coolify handles these)
+## What's Configured Elsewhere
 
-| Component | Reason |
-|-----------|--------|
-| Reverse Proxy (Traefik/Caddy) | Managed by Dokploy/Coolify |
-| SSL Certificates (Let's Encrypt) | Managed by Dokploy/Coolify |
-| Container orchestration | Managed by Dokploy/Coolify |
-| App deployments | Managed by Dokploy/Coolify |
-| Database containers | Managed by Dokploy/Coolify |
-| Monitoring dashboards | Ctrl server (Toucan) |
-| Log aggregation | Ctrl server (Toucan) |
-| Cloudflare Tunnel | To be configured with Dokploy/Coolify |
+| Component | Where |
+|-----------|-------|
+| Reverse Proxy (Traefik) | `/srv/infra/traefik/` |
+| SSL Certificates | Cloudflare (via Tunnel) |
+| Monitoring dashboards | Toucan (Grafana) |
+| Log aggregation | Toucan (Loki) |
+| Backup orchestration | Toucan |
+| Cloudflare Tunnel | `/srv/infra/cloudflared/` |
 
 ---
 
@@ -188,7 +189,7 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ## Next Steps
 
-1. Install Dokploy or Coolify
+1. Set up Traefik as reverse proxy
 2. Configure Cloudflare Tunnel for public access
-3. Deploy first application
-4. Set up backups to Ctrl server (Toucan)
+3. Deploy first SGOS application
+4. Install Alloy for log shipping to Toucan

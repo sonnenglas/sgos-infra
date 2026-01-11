@@ -8,14 +8,13 @@ Two-server setup on Netcup, connected via Tailscale mesh network, with external 
 
 | Server | Role | Services |
 |--------|------|----------|
-| **Toucan** | Control | Dokploy, Grafana/Loki, GlitchTip |
-| **Hornbill** | Applications | Business apps (Xhosa, Beanstock, etc.) |
+| **Toucan** | Control | Monitoring (Grafana/Loki), GlitchTip, Backup orchestration |
+| **Hornbill** | Applications | SGOS business apps (Xhosa, Inventory, etc.) |
 
 ## Quick Access
 
 | Service | URL |
 |---------|-----|
-| Dokploy | https://dokploy-toucan.sgl.as |
 | Grafana | http://toucan:3001 (Tailscale) |
 | GlitchTip | https://glitchtip.sgl.as |
 
@@ -24,26 +23,42 @@ Two-server setup on Netcup, connected via Tailscale mesh network, with external 
 See [`docs/`](./docs/README.md) for detailed documentation:
 
 - [Architecture](./docs/architecture.md) - Network topology and data flows
+- [API Strategy](./docs/api-strategy.md) - API versioning and contracts
+- [App Schema](./docs/app-schema.md) - Standard app.json configuration
+- [Deployment](./docs/services/deployment.md) - How apps are deployed
 - [Backups](./docs/backups.md) - Backup strategy and restore procedures
 - [Servers](./docs/servers/) - Toucan and Hornbill setup
-- [Services](./docs/services/) - Dokploy, Monitoring, GlitchTip
+- [Services](./docs/services/) - Monitoring, GlitchTip
 
 ## Repository Structure
 
 ```
 ├── docs/                 # Documentation
+├── templates/            # App templates
+│   └── app.json          # Standard app.json template
 ├── toucan/               # Toucan server configs
 │   ├── monitoring/       # Grafana/Loki/Alloy stack
-│   └── glitchtip-compose.yml
+│   └── scripts/          # Backup orchestration
 ├── hornbill/             # Hornbill server configs
-└── Sonnenglas.md         # Original architecture plan
+└── Sonnenglas.md         # SGOS architecture and concept
 ```
 
 ## Tech Stack
 
 - **Servers:** Netcup VPS (Ubuntu 24.04)
 - **Networking:** Tailscale, Cloudflare Tunnel
-- **Deployments:** Dokploy (Docker Swarm)
+- **Deployments:** Docker Compose + Traefik (source-based)
+- **App Config:** app.json (Heroku-compatible with SGOS extensions)
 - **Monitoring:** Grafana + Loki + Alloy
 - **Error Tracking:** GlitchTip
-- **Backups:** Cloudflare R2
+- **Backups:** Toucan (local) → Cloudflare R2 (offsite) via Restic
+
+## Browse Documentation Locally
+
+Run the documentation site with Docker:
+
+```bash
+docker compose -f docker-compose.docs.yml up
+```
+
+Then open http://localhost:4200 in your browser.
