@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Toucan tunnel (control server)
-# Services: GlitchTip, Grafana, Dokploy (temporary)
+# Services: GlitchTip, SGOS Infra Docs
 resource "cloudflare_zero_trust_tunnel_cloudflared" "toucan" {
   account_id = var.cloudflare_account_id
   name       = "toucan.sgl.as"
@@ -20,11 +20,6 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.toucan.id
 
   config {
-    # Order matches current Cloudflare config
-    ingress_rule {
-      hostname = "dokploy-toucan.sgl.as"
-      service  = "http://localhost:3000"
-    }
     ingress_rule {
       hostname = "glitchtip.sgl.as"
       service  = "http://localhost:8000"
@@ -59,7 +54,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "hornbill" {
   config {
     ingress_rule {
       hostname = "phone.sgl.as"
-      service  = "http://localhost:80"
+      service  = "http://localhost:9000"
     }
     # Add more SGOS apps here as they're deployed
     ingress_rule {
