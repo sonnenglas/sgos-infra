@@ -29,6 +29,11 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
       hostname = "glitchtip.sgl.as"
       service  = "http://localhost:8000"
     }
+    # SGOS Infrastructure Documentation
+    ingress_rule {
+      hostname = "sgos-infra.sgl.as"
+      service  = "http://localhost:4200"
+    }
     # Demo app for testing Zero Trust policies
     ingress_rule {
       hostname = "demo.sgl.as"
