@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Toucan tunnel (control server)
-# Services: GlitchTip, SGOS Infra Docs
+# Services: GlitchTip, SGOS Infra Docs, Homepage, Beszel, Dozzle
 resource "cloudflare_zero_trust_tunnel_cloudflared" "toucan" {
   account_id = var.cloudflare_account_id
   name       = "toucan.sgl.as"
@@ -24,10 +24,22 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
       hostname = "glitchtip.sgl.as"
       service  = "http://localhost:8000"
     }
-    # SGOS Infrastructure Documentation
     ingress_rule {
       hostname = "sgos-infra.sgl.as"
       service  = "http://localhost:4200"
+    }
+    # Monitoring
+    ingress_rule {
+      hostname = "dashboard.sgl.as"
+      service  = "http://localhost:3003"
+    }
+    ingress_rule {
+      hostname = "beszel.sgl.as"
+      service  = "http://localhost:8090"
+    }
+    ingress_rule {
+      hostname = "dozzle.sgl.as"
+      service  = "http://localhost:8888"
     }
     ingress_rule {
       service = "http_status:404"
