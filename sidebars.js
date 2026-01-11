@@ -25,12 +25,14 @@ const sidebars = {
       items: [
         'operations/deployment',
         'operations/backups',
+        'operations/cloudflare',
       ],
     },
     {
       type: 'category',
       label: 'Services',
       items: [
+        'services/sgos-infra',
         'services/monitoring',
         'services/glitchtip',
       ],

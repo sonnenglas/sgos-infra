@@ -6,7 +6,7 @@ const config = {
   tagline: 'Sonnenglas Operating System',
   favicon: 'img/favicon.ico',
 
-  url: 'https://docs.sgl.as',
+  url: 'https://sgos-infra.sgl.as',
   baseUrl: '/',
 
   organizationName: 'sonnenglas',
@@ -19,6 +19,17 @@ const config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  themes: [
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        docsRouteBasePath: '/',
+        indexBlog: false,
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -50,7 +61,7 @@ const config = {
             label: 'Docs',
           },
           {
-            href: 'https://github.com/sonnenglas/infra',
+            href: 'https://github.com/sonnenglas/sgos-infra',
             label: 'GitHub',
             position: 'right',
           },

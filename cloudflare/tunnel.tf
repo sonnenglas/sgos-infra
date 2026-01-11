@@ -34,11 +34,6 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
       hostname = "sgos-infra.sgl.as"
       service  = "http://localhost:4200"
     }
-    # Demo app for testing Zero Trust policies
-    ingress_rule {
-      hostname = "demo.sgl.as"
-      service  = "http://localhost:8000"  # Points to GlitchTip for demo
-    }
     ingress_rule {
       service = "http_status:404"
     }
