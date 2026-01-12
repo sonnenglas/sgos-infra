@@ -2,17 +2,17 @@ services:
   webhook:
     image: almir/webhook
     container_name: webhook
+    user: root
     ports:
       - "127.0.0.1:9000:9000"
     volumes:
       - ./hooks.json:/etc/webhook/hooks.json:ro
-      - ./scripts:/scripts:ro
+      - ./scripts:/scripts
       - /srv/services:/srv/services
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker:ro
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-    command: -verbose -hooks=/etc/webhook/hooks.json -hotreload -template
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache docker-cli docker-cli-compose && exec /usr/local/bin/webhook -verbose -hooks=/etc/webhook/hooks.json -hotreload -template"]
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
