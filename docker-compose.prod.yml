@@ -1,12 +1,25 @@
 services:
+  # Caddy reverse proxy - handles maintenance mode switching
+  caddy:
+    image: caddy:2-alpine
+    container_name: sgos-infra-caddy
+    ports:
+      - "127.0.0.1:4200:4200"
+    volumes:
+      - ./maintenance-mode:/srv/maintenance-mode:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - docs
+    restart: unless-stopped
+
+  # Docusaurus docs site (internal, accessed via Caddy)
   docs:
     image: node:24-alpine
+    container_name: sgos-infra-docs
     working_dir: /app
     volumes:
       - .:/app
       - node_modules:/app/node_modules
-    ports:
-      - "127.0.0.1:4200:3000"
     environment:
       - GIT_COMMIT=${GIT_COMMIT:-dev}
     command: sh -c "npm install && npm run build && npx serve build -l 3000"

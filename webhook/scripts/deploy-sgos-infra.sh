@@ -7,11 +7,16 @@ set -e
 
 REPO="$1"
 REF="$2"
+COMPOSE_FILE="/srv/services/sgos-infra/docker-compose.prod.yml"
+MAINTENANCE_FLAG="/srv/services/sgos-infra/maintenance-mode/maintenance.flag"
 
 echo "=== Deploy triggered ==="
 echo "Repository: $REPO"
 echo "Ref: $REF"
 echo "Time: $(date)"
+
+echo "=== Entering maintenance mode ==="
+touch "$MAINTENANCE_FLAG"
 
 echo "=== Pulling latest changes ==="
 docker run --rm \
@@ -28,8 +33,18 @@ GIT_COMMIT=$(docker run --rm \
   alpine/git -c "git rev-parse HEAD")
 echo "Commit: $GIT_COMMIT"
 
-echo "=== Restarting documentation service ==="
-GIT_COMMIT=$GIT_COMMIT docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml down
-GIT_COMMIT=$GIT_COMMIT docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml up -d
+echo "=== Rebuilding docs container ==="
+# Stop and rebuild only the docs container (Caddy stays up, serves maintenance page)
+GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d --build docs
+
+echo "=== Waiting for docs to be ready ==="
+sleep 10
+
+echo "=== Exiting maintenance mode ==="
+rm -f "$MAINTENANCE_FLAG"
+
+echo "=== Ensuring Caddy is running ==="
+GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d caddy
 
 echo "=== Deploy complete ==="
+echo "Deployed commit: $GIT_COMMIT"

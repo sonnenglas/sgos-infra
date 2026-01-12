@@ -47,3 +47,34 @@ terraform apply   # Apply changes
 ## State
 
 Terraform state is stored locally in `terraform.tfstate`. This file is gitignored but should be backed up.
+
+## cloudflared Daemon
+
+The `cloudflared` daemon runs on both servers as a systemd service with **token-based configuration**:
+
+```bash
+# On both Toucan and Hornbill
+ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token <token>
+```
+
+### How It Works
+
+1. cloudflared authenticates to Cloudflare using the embedded token
+2. Cloudflare returns the tunnel configuration (ingress rules)
+3. cloudflared routes traffic according to those rules
+
+### Implications
+
+- **Ingress rules are managed remotely** (via Terraform's `cloudflare_zero_trust_tunnel_cloudflared_config`)
+- **No local config files** exist on the servers
+- **Changes require `terraform apply`** - there's no quick local switching
+
+This is why apps use a [Caddy sidecar for maintenance mode](./maintenance-mode.md) instead of switching cloudflared config directly.
+
+### Checking Status
+
+```bash
+# On any server
+systemctl status cloudflared
+journalctl -u cloudflared -f
+```
