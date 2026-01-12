@@ -17,7 +17,8 @@ echo "=== Pulling latest changes ==="
 docker run --rm \
   -v /srv/services/sgos-infra:/repo \
   -w /repo \
-  alpine/git sh -c "git config --global --add safe.directory /repo && git pull origin main"
+  --entrypoint sh \
+  alpine/git -c "git config --global --add safe.directory /repo && git pull origin main"
 
 echo "=== Restarting documentation service ==="
 docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml down
