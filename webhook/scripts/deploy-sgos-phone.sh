@@ -87,6 +87,9 @@ fi
 echo "=== Exiting maintenance mode ==="
 rm -f "$PROXY_FLAG"
 
+# Wait for nginx file cache to expire (2s cache + buffer)
+sleep 3
+
 echo "=== Final health check ==="
 if ! curl -sf http://127.0.0.1:9000/health > /dev/null 2>&1; then
     echo "WARNING: Health check via proxy failed, re-enabling maintenance mode"
