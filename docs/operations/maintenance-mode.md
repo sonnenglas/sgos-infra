@@ -16,9 +16,12 @@ Each app uses an **nginx reverse proxy** that sits between Cloudflare Tunnel and
 Cloudflare Tunnel → nginx (port 4200) → App (internal)
 ```
 
-nginx checks for a flag file on every request:
-- **Flag exists:** Serve maintenance page (auto-refreshes every 3 seconds)
-- **Flag absent:** Proxy to the application
+nginx checks for flag files on every request:
+- **Global flag** (`/srv/maintenance/global.flag`): All apps show maintenance page
+- **App-specific flag** (`maintenance-mode/maintenance.flag`): Only this app shows maintenance page
+- **No flags:** Proxy to the application
+
+The maintenance page auto-refreshes every 3 seconds.
 
 ## Architecture
 
@@ -30,7 +33,9 @@ nginx checks for a flag file on every request:
 │  ┌─────────────────┐                                    │
 │  │  nginx          │                                    │
 │  │                 │                                    │
-│  │  maintenance.flag exists?                            │
+│  │  /srv/maintenance/global.flag exists? (global)              │
+│  │    yes → serve index.html                            │
+│  │  maintenance-mode/maintenance.flag exists? (app)     │
 │  │    yes → serve index.html                            │
 │  │    no  → reverse_proxy to app                        │
 │  └─────────────────┘                                    │
@@ -61,7 +66,23 @@ The nginx sidecar approach:
 4. **Exit maintenance:** `rm maintenance-mode/maintenance.flag`
 5. **nginx resumes proxying:** Traffic flows to the updated app
 
-## Manual Maintenance Mode
+## Global Maintenance Mode
+
+For server-wide maintenance (OS updates, hardware work, etc.), use the global flag:
+
+```bash
+# Put ALL apps in maintenance mode
+touch /srv/maintenance/global.flag
+
+# Resume all apps
+rm /srv/maintenance/global.flag
+```
+
+This affects every app that uses the nginx maintenance mode pattern. Individual apps can still be deployed while global maintenance is active.
+
+## App-Specific Maintenance Mode
+
+For individual app deployments (automatically handled by deploy scripts):
 
 ### Enter Maintenance
 
@@ -123,6 +144,12 @@ server {
     }
 
     location / {
+        # Global maintenance mode (all apps)
+        if (-f /srv/maintenance/global.flag) {
+            return 503;
+        }
+
+        # App-specific maintenance mode
         if (-f /srv/maintenance-mode/maintenance.flag) {
             return 503;
         }
