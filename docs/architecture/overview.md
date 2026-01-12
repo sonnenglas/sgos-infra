@@ -22,14 +22,19 @@ Both servers are hosted by Netcup in Nuremberg, Germany.
 
 ### Toucan (Control)
 
-- Grafana/Loki/Alloy (centralized logging)
+- Beszel (server monitoring)
+- Dozzle (Docker log viewer)
+- Homepage (dashboard)
 - GlitchTip (error tracking)
+- PocketID (identity provider)
+- Watchtower (auto-updates)
 - Backup orchestration
 
 ### Hornbill (Apps)
 
 - SGOS applications
-- Traefik (reverse proxy)
+- Beszel agent
+- Dozzle agent
 - Cloudflare Tunnel
 
 ## Network Topology

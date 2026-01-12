@@ -28,7 +28,7 @@ Two-server setup on Netcup in Nuremberg, connected via Tailscale mesh network, w
 
 | Server | Role | Purpose |
 |--------|------|---------|
-| Toucan | Control | Monitoring, GlitchTip, Backup orchestration |
+| Toucan | Control | Monitoring, GlitchTip, PocketID, Backup orchestration |
 | Hornbill | Applications | SGOS business apps |
 
 See [Architecture Overview](./architecture/overview) for server specs and network topology.
@@ -37,15 +37,20 @@ See [Architecture Overview](./architecture/overview) for server specs and networ
 
 - **Servers:** Netcup VPS (Ubuntu 24.04)
 - **Networking:** Tailscale, Cloudflare Tunnel
-- **Deployments:** Docker Compose + Traefik (source-based)
+- **Deployments:** Docker Compose (source-based)
 - **App Config:** app.json (Heroku-compatible with SGOS extensions)
-- **Monitoring:** Grafana + Loki + Alloy
+- **Monitoring:** Beszel (server metrics) + Dozzle (Docker logs)
 - **Error Tracking:** GlitchTip
+- **Identity:** PocketID (OIDC provider)
 - **Backups:** Toucan (local) → Cloudflare R2 (offsite) via Restic
 
 ## Services
 
-| Service | URL |
-|---------|-----|
-| Grafana | http://toucan:3001 (Tailscale) |
-| GlitchTip | https://glitchtip.sgl.as |
+| Service | URL | Description |
+|---------|-----|-------------|
+| Dashboard | https://dashboard.sgl.as | Homepage with links to all services |
+| Beszel | https://beszel.sgl.as | Server monitoring |
+| Dozzle | https://dozzle.sgl.as | Docker logs |
+| GlitchTip | https://glitchtip.sgl.as | Error tracking |
+| PocketID | https://id.sgl.as | Identity provider |
+| SGOS Docs | https://sgos-infra.sgl.as | This documentation |
