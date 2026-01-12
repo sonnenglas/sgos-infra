@@ -19,6 +19,17 @@ Apps are deployed as Docker Compose stacks with Cloudflare Tunnel for external a
 | Configuration | app.json + docker-compose.yml |
 | Secrets | SOPS-encrypted .env.sops files (see [Secrets Management](./secrets)) |
 
+## Branch Strategy
+
+All SGOS repositories follow the same branch convention:
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | **Production** - auto-deploys on push |
+| feature branches | Development work, no auto-deploy |
+
+**Important:** The `main` branch is always production. Push to `main` triggers automatic deployment via GitHub webhook.
+
 ## Directory Structure
 
 ### Hornbill (App Server)

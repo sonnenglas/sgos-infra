@@ -48,6 +48,18 @@ Documents required environment variables. Actual values go in `.env`.
 | `backup.output` | Directory for backup files |
 | `apis` | API endpoints (private, internal, public) |
 
+## Required Files
+
+Every SGOS app must have these files in its repository:
+
+| File | Description |
+|------|-------------|
+| `app.json` | App metadata (this schema) |
+| `CHANGELOG.md` | Change history ([Keep a Changelog](https://keepachangelog.com/) format) |
+| `.env.sops` | Encrypted secrets (SOPS) |
+| `.sops.yaml` | SOPS configuration |
+| `docker-compose.yml` | Container configuration |
+
 ## Location
 
 Lives at `/srv/apps/sgos-<name>/app.json` on the server, and in the git repository.

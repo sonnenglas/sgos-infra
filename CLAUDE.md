@@ -73,7 +73,15 @@ ssh stefan@100.67.57.25    # Hornbill (apps)
 - **Source-based**: Code on server via git, not container registry
 - **Docker Compose**: Every service has a `docker-compose.yml`
 - **Ports**: Services bind to `127.0.0.1:<port>`, Cloudflare Tunnel routes externally
-- **Auto-deploy**: Push to `main` → webhook → Toucan pulls & restarts (for sgos-infra)
+- **Branch strategy**: `main` = production, auto-deploys on push
+- **Auto-deploy**: Push to `main` → webhook.sgl.as → Toucan → SSH to target server
+
+#### Required Files (every SGOS app)
+- `app.json` - App metadata
+- `CHANGELOG.md` - Change history (Keep a Changelog format)
+- `.env.sops` - Encrypted secrets
+- `.sops.yaml` - SOPS configuration
+- `docker-compose.yml` - Container configuration
 
 #### Secrets
 - **SOPS + age**: All secrets encrypted with age key
