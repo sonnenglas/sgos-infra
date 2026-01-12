@@ -49,6 +49,15 @@ resource "cloudflare_record" "dozzle" {
   proxied = true
 }
 
+# Monitoring - Grafana (Log Analytics)
+resource "cloudflare_record" "grafana" {
+  zone_id = var.cloudflare_zone_id
+  name    = "grafana"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 # PocketID - Identity Provider (NO Zero Trust - it IS the identity provider)
 resource "cloudflare_record" "pocketid" {
   zone_id = var.cloudflare_zone_id

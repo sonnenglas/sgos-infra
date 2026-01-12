@@ -89,3 +89,24 @@ resource "cloudflare_zero_trust_access_policy" "dozzle_google" {
     email_domain = ["sonnenglas.net"]
   }
 }
+
+# Grafana - Log Analytics
+resource "cloudflare_zero_trust_access_application" "grafana" {
+  zone_id          = var.cloudflare_zone_id
+  name             = "Grafana"
+  domain           = "grafana.sgl.as"
+  type             = "self_hosted"
+  session_duration = "24h"
+}
+
+resource "cloudflare_zero_trust_access_policy" "grafana_google" {
+  zone_id        = var.cloudflare_zone_id
+  application_id = cloudflare_zero_trust_access_application.grafana.id
+  name           = "Require Sonnenglas Google"
+  precedence     = 1
+  decision       = "allow"
+
+  include {
+    email_domain = ["sonnenglas.net"]
+  }
+}

@@ -140,16 +140,36 @@ Owner: stefan:stefan
 
 ## Monitoring Stack (Grafana + Loki + Alloy)
 
-Runs outside Dokploy for independence.
+Runs outside Dokploy for independence. Centralized logging for both Toucan and Hornbill.
 
 | Component | Image | Port | Purpose |
 |-----------|-------|------|---------|
 | Grafana | grafana/grafana:11.4.0 | 3001 | Log visualization UI |
-| Loki | grafana/loki:3.3.2 | 3100 (internal) | Log storage |
+| Loki | grafana/loki:3.3.2 | 3100 | Log storage (accepts remote) |
 | Alloy | grafana/alloy:v1.5.1 | - | Log collector |
+
+### Architecture
+
+```
+Hornbill (100.67.57.25)          Toucan (100.102.199.98)
+┌─────────────────────┐          ┌─────────────────────┐
+│ Docker containers   │          │ Docker containers   │
+│        │            │          │        │            │
+│        ▼            │          │        ▼            │
+│      Alloy          │────────▶ │      Alloy ───▶ Loki│
+│  (server=hornbill)  │  :3100   │  (server=toucan)  │ │
+└─────────────────────┘          │                    ▼ │
+                                 │               Grafana│
+                                 └─────────────────────┘
+                                           │
+                                 Cloudflare Tunnel
+                                           ▼
+                                   grafana.sgl.as
+```
 
 ### Access
 
+- **Public:** https://grafana.sgl.as (Google SSO via Cloudflare Access)
 - **Tailscale:** `http://toucan:3001`
 - **Default credentials:** admin / admin (change on first login)
 
@@ -160,17 +180,35 @@ Runs outside Dokploy for independence.
 ### Containers Being Logged
 
 All Docker containers are automatically discovered and logged by Alloy:
-- Dokploy services (dokploy, postgres, redis)
-- Monitoring stack (grafana, loki, alloy)
-- Any future containers
+- **Toucan:** Dokploy services, monitoring stack, GlitchTip
+- **Hornbill:** Phone app, proxy, any future apps
+
+Logs are labeled with `server=toucan` or `server=hornbill` for filtering.
+
+### Example Queries
+
+```logql
+# All logs from Hornbill
+{server="hornbill"}
+
+# Phone app logs
+{server="hornbill", container="phone"}
+
+# GlitchTip errors
+{server="toucan", container=~"glitchtip.*"} |= "error"
+```
 
 ### Management
 
 ```bash
-# Start/stop/restart
+# Toucan stack
 cd /srv/config/monitoring && docker compose up -d
 cd /srv/config/monitoring && docker compose down
 cd /srv/config/monitoring && docker compose restart
+
+# Hornbill Alloy
+cd /srv/services/alloy && docker compose up -d
+cd /srv/services/alloy && docker compose restart
 
 # View logs
 docker logs grafana
@@ -241,6 +279,9 @@ ssh -i ~/.ssh/deploy_hornbill stefan@100.67.57.25 "hostname"
 | 2026-01-08 | Configured Cloudflare Tunnel route (dokploy-toucan.sgl.as) |
 | 2026-01-09 | Fixed "Invalid origin" error with DOKPLOY_DOMAIN env var |
 | 2026-01-09 | Installed monitoring stack (Grafana + Loki + Alloy) |
+| 2026-01-12 | Exposed Loki for remote log collection (port 3100) |
+| 2026-01-12 | Installed Alloy on Hornbill shipping logs to Toucan |
+| 2026-01-12 | Added Grafana to Cloudflare tunnel (grafana.sgl.as) |
 
 ---
 
@@ -251,4 +292,5 @@ ssh -i ~/.ssh/deploy_hornbill stefan@100.67.57.25 "hostname"
 3. ~~Deploy first application~~
 4. ~~Set up error tracking (GlitchTip)~~
 5. ~~Configure backup jobs~~ ✅ Backup orchestrator at `/srv/services/backups/`
-6. Install Alloy on Hornbill to ship logs to Toucan
+6. ~~Install Alloy on Hornbill to ship logs to Toucan~~ ✅ Centralized logging complete
+7. Set up uptime monitoring (Uptime Kuma)

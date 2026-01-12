@@ -109,6 +109,10 @@ NTP: active, synchronized
 ├── infra/                   # Infrastructure services
 │   ├── traefik/             # Reverse proxy
 │   └── cloudflared/         # Cloudflare Tunnel
+├── services/                # System services
+│   └── alloy/               # Log shipping to Toucan
+│       ├── docker-compose.yml
+│       └── alloy.config
 └── apps/                    # SGOS applications
     └── sgos-<name>/
         ├── app.json         # App metadata
@@ -154,14 +158,45 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ---
 
+## Log Shipping (Alloy)
+
+Docker logs from all containers are shipped to Toucan's Loki via Grafana Alloy.
+
+| Property | Value |
+|----------|-------|
+| Service | `/srv/services/alloy/` |
+| Target | `http://100.102.199.98:3100` (Toucan Loki) |
+| Label | `server=hornbill` |
+
+### Management
+
+```bash
+cd /srv/services/alloy && docker compose up -d
+cd /srv/services/alloy && docker compose logs -f
+cd /srv/services/alloy && docker compose restart
+```
+
+### Verify
+
+```bash
+# Check Alloy is running
+docker ps | grep alloy
+
+# Check Loki connectivity
+curl -s http://100.102.199.98:3100/ready
+```
+
+---
+
 ## What's Configured Elsewhere
 
 | Component | Where |
 |-----------|-------|
 | Reverse Proxy (Traefik) | `/srv/infra/traefik/` |
 | SSL Certificates | Cloudflare (via Tunnel) |
-| Monitoring dashboards | Toucan (Grafana) |
+| Monitoring dashboards | Toucan (Grafana) at https://grafana.sgl.as |
 | Log aggregation | Toucan (Loki) |
+| Log shipping | Local Alloy at `/srv/services/alloy/` |
 | Backup orchestration | Toucan |
 | Cloudflare Tunnel | `/srv/infra/cloudflared/` |
 
@@ -184,6 +219,7 @@ Stefan is in the `docker` group (can run docker without sudo).
 | 2026-01-08 | Enabled unattended-upgrades |
 | 2026-01-08 | Created /srv directory structure |
 | 2026-01-08 | Installed Docker CE 29.1.3 + Compose 5.0.1 |
+| 2026-01-12 | Installed Alloy for log shipping to Toucan Loki |
 
 ---
 
@@ -191,5 +227,5 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 1. Set up Traefik as reverse proxy
 2. Configure Cloudflare Tunnel for public access
-3. Deploy first SGOS application
-4. Install Alloy for log shipping to Toucan
+3. ~~Deploy first SGOS application~~ ✅ Phone app deployed
+4. ~~Install Alloy for log shipping to Toucan~~ ✅ Shipping to grafana.sgl.as
