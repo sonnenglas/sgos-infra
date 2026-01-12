@@ -120,6 +120,127 @@ restic ls latest
 restic ls latest /srv/backups/staging/sgos-phone/
 ```
 
+## Restore Examples
+
+### Example 1: Restore Phone Database
+
+```bash
+# On Toucan - prepare restic
+cd /srv/services/backups
+source .env
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
+
+# List available snapshots
+restic snapshots
+
+# Restore latest to temp directory
+restic restore latest --target /tmp/restore --include "sgos-phone"
+
+# Copy to Hornbill
+scp /tmp/restore/srv/backups/staging/sgos-phone/database.sql stefan@hornbill:/tmp/
+
+# On Hornbill - restore database
+ssh stefan@hornbill
+cd /srv/apps/sgos-phone
+
+# Stop app, keep database running
+docker compose stop phone
+
+# Restore (drops and recreates)
+docker exec -i sgos-phone-db psql -U postgres -d phone < /tmp/database.sql
+
+# Restart app
+docker compose up -d phone
+
+# Cleanup
+rm /tmp/database.sql
+```
+
+### Example 2: Restore Specific Voicemail Files
+
+```bash
+# On Toucan
+cd /srv/services/backups
+source .env
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
+
+# Browse to find specific files
+restic ls latest /srv/backups/staging/sgos-phone/voicemails/
+
+# Restore just voicemails directory
+restic restore latest --target /tmp/restore --include "sgos-phone/voicemails"
+
+# Copy specific files to Hornbill
+scp /tmp/restore/srv/backups/staging/sgos-phone/voicemails/*.mp3 \
+    stefan@hornbill:/srv/apps/sgos-phone/data/voicemails/
+```
+
+### Example 3: Restore from Specific Date
+
+```bash
+# List snapshots with timestamps
+restic snapshots
+
+# Output shows:
+# ID        Time                 Host    Tags
+# a1b2c3d4  2026-01-10 03:00:05  toucan
+# e5f6g7h8  2026-01-11 03:00:03  toucan
+# i9j0k1l2  2026-01-12 03:00:04  toucan
+
+# Restore from January 10th
+restic restore a1b2c3d4 --target /tmp/restore-jan10
+```
+
+### Example 4: Point-in-Time Database Restore
+
+For PostgreSQL with WAL archiving (if configured):
+
+```bash
+# Stop the app
+docker compose stop phone
+
+# Restore base backup
+docker exec -i sgos-phone-db psql -U postgres -d phone < /tmp/database.sql
+
+# App will replay any WAL logs on startup
+docker compose up -d phone
+```
+
+**Note:** Currently, backups are daily SQL dumps. For point-in-time recovery, WAL archiving would need to be configured in the app's PostgreSQL setup.
+
+## Backup Verification
+
+### Verify Backup Integrity
+
+```bash
+# On Toucan
+cd /srv/services/backups
+source .env
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
+
+# Check repository integrity
+restic check
+
+# Verify specific snapshot can be restored
+restic restore latest --target /tmp/verify-test --verify
+rm -rf /tmp/verify-test
+```
+
+### Verify Database Dump
+
+```bash
+# Restore and check SQL file is valid
+restic restore latest --target /tmp/verify --include "sgos-phone/database.sql"
+
+# Check file size (should be non-zero)
+ls -lh /tmp/verify/srv/backups/staging/sgos-phone/database.sql
+
+# Optionally restore to test database
+docker exec -i sgos-phone-db psql -U postgres -c "CREATE DATABASE phone_test;"
+docker exec -i sgos-phone-db psql -U postgres -d phone_test < /tmp/verify/.../database.sql
+docker exec -i sgos-phone-db psql -U postgres -c "DROP DATABASE phone_test;"
+```
+
 ## Adding a New App
 
 1. Create `backup.sh` in the app repo (runs on app server)

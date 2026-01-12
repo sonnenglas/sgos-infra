@@ -140,6 +140,14 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ---
 
+## Cron Jobs
+
+No cron jobs on Hornbill. All scheduled tasks run from Toucan:
+- Backups are triggered via SSH from Toucan
+- Deployments are triggered via webhook from Toucan
+
+---
+
 ## Network
 
 ### Interfaces

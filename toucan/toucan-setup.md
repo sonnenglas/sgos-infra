@@ -218,7 +218,25 @@ docker logs alloy
 
 ---
 
-## Docker
+## Installed Packages
+
+### System Tools
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| curl | 8.5.0 | HTTP client |
+| wget | 1.21.4 | File downloads |
+| git | 2.43.0 | Version control |
+| htop | 3.3.0 | Process monitor |
+| ncdu | 1.19 | Disk usage analyzer |
+| vim | 9.1 | Text editor |
+| jq | 1.7 | JSON processor |
+| fail2ban | 1.0.2 | Intrusion prevention |
+| rsync | 3.2.7 | File sync (for backups) |
+| restic | 0.16.4 | Backup to R2 |
+| python3 | 3.12.3 | Status collector script |
+
+### Docker
 
 | Component | Version |
 |-----------|---------|
@@ -227,6 +245,27 @@ docker logs alloy
 | Swarm Mode | Active (Manager) |
 
 Stefan is in the `docker` group (can run docker without sudo).
+
+---
+
+## Cron Jobs
+
+All cron jobs run as user `stefan`:
+
+| Schedule | Command | Purpose |
+|----------|---------|---------|
+| `0 3 * * *` | `/srv/services/backups/backup-orchestrator.sh` | Daily backup at 3 AM |
+| `* * * * *` | `/srv/services/status/status.py` | Status page collector (every minute) |
+
+View cron jobs:
+```bash
+crontab -l
+```
+
+Cron log:
+```bash
+tail -f /srv/backups/cron.log  # Backup log
+```
 
 ---
 
