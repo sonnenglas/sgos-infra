@@ -34,7 +34,7 @@ GIT_COMMIT=$(docker run --rm \
 echo "Commit: $GIT_COMMIT"
 
 echo "=== Rebuilding docs container ==="
-# Stop and rebuild only the docs container (Caddy stays up, serves maintenance page)
+# Rebuild only docs - proxy stays up and serves maintenance page
 GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d --build docs
 
 echo "=== Waiting for docs to be ready ==="
