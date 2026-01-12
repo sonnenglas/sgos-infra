@@ -18,7 +18,7 @@ docker run --rm \
   -v /srv/services/sgos-infra:/repo \
   -w /repo \
   --entrypoint sh \
-  alpine/git -c "git config --global --add safe.directory /repo && git pull origin main"
+  alpine/git -c "git config --global --add safe.directory /repo && git pull --ff-only origin main"
 
 echo "=== Restarting documentation service ==="
 docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml down
