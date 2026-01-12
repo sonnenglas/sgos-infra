@@ -110,13 +110,19 @@ The tunnel provides external HTTPS access without exposing ports directly.
 │   ├── files/
 │   ├── grafana/             # Grafana dashboards, users
 │   └── loki/                # Log storage
-├── backups/                 # Local backup staging
-│   └── daily/
-└── config/                  # App configs
-    └── monitoring/          # Grafana/Loki/Alloy stack
-        ├── docker-compose.yml
-        ├── loki.yml
-        └── alloy.config
+├── backups/                 # Backup staging and logs
+│   ├── staging/             # Collected from all servers
+│   ├── status.json          # Backup status per app
+│   └── backup.log           # Backup run log
+├── config/                  # App configs
+│   └── monitoring/          # Grafana/Loki/Alloy stack
+│       ├── docker-compose.yml
+│       ├── loki.yml
+│       └── alloy.config
+└── services/
+    └── backups/             # Backup orchestrator
+        ├── .env             # R2 credentials, restic password
+        └── backup-orchestrator.sh
 
 /etc/dokploy/                # Dokploy data
 ├── applications/
@@ -186,6 +192,23 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ---
 
+## SSH Access to Hornbill
+
+Toucan can SSH to Hornbill for deployments and backups.
+
+| Property | Value |
+|----------|-------|
+| Key | `/home/stefan/.ssh/deploy_hornbill` |
+| Target | `stefan@100.67.57.25` (Hornbill via Tailscale) |
+| Used by | Webhook deploy scripts, backup orchestrator |
+
+```bash
+# Test connection
+ssh -i ~/.ssh/deploy_hornbill stefan@100.67.57.25 "hostname"
+```
+
+---
+
 ## Network
 
 ### Interfaces
@@ -223,9 +246,9 @@ Stefan is in the `docker` group (can run docker without sudo).
 
 ## Next Steps
 
-1. Add Hornbill as remote server in Dokploy
+1. ~~Add Hornbill as remote server in Dokploy~~
 2. Configure Traefik for app routing
-3. Deploy first application
-4. Set up error tracking (GlitchTip)
-5. Configure backup jobs
+3. ~~Deploy first application~~
+4. ~~Set up error tracking (GlitchTip)~~
+5. ~~Configure backup jobs~~ ✅ Backup orchestrator at `/srv/services/backups/`
 6. Install Alloy on Hornbill to ship logs to Toucan
