@@ -75,7 +75,7 @@ Business applications built on the SGOS platform.
 
 | App | Server | Status | Description |
 |-----|--------|--------|-------------|
-| Doc Flow | TBD | 🚧 Development | Document management system |
+| Docflow | TBD | 🚧 Development | Document management system |
 
 ---
 
