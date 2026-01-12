@@ -7,7 +7,8 @@ set -e
 
 REPO="$1"
 REF="$2"
-COMPOSE_FILE="/srv/services/sgos-infra/src/docker-compose.prod.yml"
+INFRA_DIR="/srv/services/sgos-infra"
+COMPOSE_FILE="$INFRA_DIR/docker-compose.prod.yml"
 PROXY_FLAG="/srv/proxy/toucan/flags/docs.flag"
 
 echo "=== Deploy triggered ==="
@@ -21,14 +22,14 @@ touch "$PROXY_FLAG"
 
 echo "=== Pulling latest changes ==="
 docker run --rm \
-  -v /srv/services/sgos-infra/src:/repo \
+  -v "$INFRA_DIR":/repo \
   -w /repo \
   --entrypoint sh \
   alpine/git -c "git config --global --add safe.directory /repo && git pull --ff-only origin main"
 
 echo "=== Getting commit hash ==="
 GIT_COMMIT=$(docker run --rm \
-  -v /srv/services/sgos-infra/src:/repo \
+  -v "$INFRA_DIR":/repo \
   -w /repo \
   --entrypoint sh \
   alpine/git -c "git config --global --add safe.directory /repo && git rev-parse HEAD")
