@@ -52,20 +52,33 @@ docker compose up -d --build phone db
 
 echo "=== Waiting for app health check ==="
 sleep 10
-for i in 1 2 3 4 5; do
+HEALTHY=false
+for i in 1 2 3 4 5 6; do
     if curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
         echo "App is healthy"
+        HEALTHY=true
         break
     fi
-    echo "Waiting for app... ($i/5)"
+    echo "Waiting for app... ($i/6)"
     sleep 5
 done
+
+if [ "$HEALTHY" = "false" ]; then
+    echo "FAILED: App did not become healthy after 40 seconds"
+    echo "Maintenance mode remains active - manual intervention required"
+    echo "Check logs: docker logs sgos-phone-app"
+    exit 1
+fi
 
 echo "=== Exiting maintenance mode ==="
 rm -f "$PROXY_FLAG"
 
 echo "=== Final health check ==="
-curl -sf http://127.0.0.1:9000/health || echo "Warning: Health check via proxy failed"
+if ! curl -sf http://127.0.0.1:9000/health > /dev/null 2>&1; then
+    echo "WARNING: Health check via proxy failed, re-enabling maintenance mode"
+    touch "$PROXY_FLAG"
+    exit 1
+fi
 
 echo "=== Deploy complete ==="
 EOF
