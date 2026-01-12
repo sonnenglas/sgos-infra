@@ -1,12 +1,12 @@
 ---
 title: Monitoring
 sidebar_position: 1
-description: Server metrics and Docker logs
+description: Server metrics, Docker logs, and log analytics
 ---
 
 # Monitoring
 
-Server monitoring with Beszel and centralized Docker logs with Dozzle.
+Server monitoring with Beszel, real-time Docker logs with Dozzle, and log analytics with Grafana/Loki.
 
 ## Services
 
@@ -15,8 +15,45 @@ Server monitoring with Beszel and centralized Docker logs with Dozzle.
 | Dashboard | https://dashboard.sgl.as | Homepage with links to all services |
 | Beszel | https://beszel.sgl.as | Server metrics (CPU, memory, disk, network) |
 | Dozzle | https://dozzle.sgl.as | Real-time Docker container logs |
+| Grafana | https://grafana.sgl.as | Log analytics and querying |
 
 ## Architecture
+
+### Grafana / Loki / Alloy
+
+Centralized log aggregation from all Docker containers on both servers.
+
+```
+Hornbill                        Toucan
+┌──────────────┐                ┌──────────────┐
+│ Docker       │                │ Docker       │
+│ containers   │                │ containers   │
+│     │        │                │     │        │
+│     ▼        │                │     ▼        │
+│   Alloy      │────────────────│   Alloy      │
+│ server=      │   port 3100    │ server=      │
+│ hornbill     │                │ toucan       │
+└──────────────┘                │     │        │
+                                │     ▼        │
+                                │   Loki       │
+                                │     │        │
+                                │     ▼        │
+                                │  Grafana ────┼──▶ grafana.sgl.as
+                                └──────────────┘
+```
+
+- **Alloy** discovers and collects logs from all Docker containers
+- **Loki** stores logs with 30-day retention
+- **Grafana** provides the query UI
+
+Logs are labeled with `server=toucan` or `server=hornbill` for filtering.
+
+**Example queries:**
+```logql
+{server="hornbill"}                    # All Hornbill logs
+{container="phone"}                    # Phone app logs
+{server="toucan"} |= "error"           # Toucan errors
+```
 
 ### Beszel
 
@@ -32,11 +69,17 @@ Server monitoring with Beszel and centralized Docker logs with Dozzle.
 
 ## Location
 
-All monitoring services run on Toucan at `/srv/services/monitoring/`
+| Service | Server | Path |
+|---------|--------|------|
+| Grafana, Loki, Alloy | Toucan | `/srv/config/monitoring/` |
+| Beszel, Dozzle, Homepage | Toucan | `/srv/services/monitoring/` |
+| Alloy (remote) | Hornbill | `/srv/services/alloy/` |
 
 ## Authentication
 
-Both Beszel and Dozzle support auto-login via Cloudflare Zero Trust headers:
+**Grafana:** Protected by Cloudflare Access. After Google SSO, use Grafana's built-in login (admin/admin, change on first use).
+
+**Beszel and Dozzle:** Support auto-login via Cloudflare Zero Trust headers:
 
 - User authenticates with Google via Cloudflare Zero Trust
 - Cloudflare passes `Cf-Access-Authenticated-User-Email` header
