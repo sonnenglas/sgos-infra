@@ -1,5 +1,18 @@
 # DNS Records managed by Terraform
 
+# =============================================================================
+# Toucan Tunnel Services
+# =============================================================================
+
+# GlitchTip - Error Tracking
+resource "cloudflare_record" "glitchtip" {
+  zone_id = var.cloudflare_zone_id
+  name    = "glitchtip"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 # SGOS Infrastructure Documentation
 resource "cloudflare_record" "sgos_infra" {
   zone_id = var.cloudflare_zone_id
@@ -36,4 +49,24 @@ resource "cloudflare_record" "dozzle" {
   proxied = true
 }
 
+# PocketID - Identity Provider (NO Zero Trust - it IS the identity provider)
+resource "cloudflare_record" "pocketid" {
+  zone_id = var.cloudflare_zone_id
+  name    = "id"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
 
+# =============================================================================
+# Hornbill Tunnel Services
+# =============================================================================
+
+# Phone - Voicemail System (NO Zero Trust - public webhook endpoint)
+resource "cloudflare_record" "phone" {
+  zone_id = var.cloudflare_zone_id
+  name    = "phone"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.hornbill.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}

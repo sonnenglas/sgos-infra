@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Toucan tunnel (control server)
-# Services: GlitchTip, SGOS Infra Docs, Homepage, Beszel, Dozzle
+# Services: GlitchTip, SGOS Infra Docs, Dashboard, Beszel, Dozzle, PocketID
 resource "cloudflare_zero_trust_tunnel_cloudflared" "toucan" {
   account_id = var.cloudflare_account_id
   name       = "toucan.sgl.as"
@@ -42,13 +42,17 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
       service  = "http://localhost:8888"
     }
     ingress_rule {
+      hostname = "id.sgl.as"
+      service  = "http://localhost:3080"
+    }
+    ingress_rule {
       service = "http_status:404"
     }
   }
 }
 
 # Hornbill tunnel (app server)
-# Services: SGOS apps via Traefik (or direct)
+# Services: SGOS apps (direct routing to localhost ports)
 resource "cloudflare_zero_trust_tunnel_cloudflared" "hornbill" {
   account_id = var.cloudflare_account_id
   name       = "hornbill"
