@@ -50,7 +50,7 @@ The nginx sidecar approach:
 - Works with current cloudflared setup (no migration needed)
 - Simple flag-file switching via `if (-f file)` directive
 - Minimal overhead (~10MB RAM per app)
-- File existence cached for 5s (negligible syscall overhead even under high load)
+- File existence cached for 2s (negligible syscall overhead even under high load)
 - No Terraform/Cloudflare API calls during deployment
 
 ## Deployment Flow
@@ -109,9 +109,9 @@ server {
     resolver 127.0.0.11 valid=10s;
     set $upstream app:INTERNAL_PORT;
 
-    # Cache file existence checks (5s delay acceptable for maintenance toggle)
+    # Cache file existence checks (2s delay acceptable for maintenance toggle)
     open_file_cache max=10 inactive=60s;
-    open_file_cache_valid 5s;
+    open_file_cache_valid 2s;
     open_file_cache_errors on;
 
     # Maintenance mode via error_page pattern
@@ -188,7 +188,7 @@ rm /srv/services/<app>/maintenance-mode/maintenance.flag
 
 ### nginx not detecting flag changes
 
-nginx caches file existence checks for 5 seconds to reduce syscall overhead. After touching or removing the flag, wait up to 5 seconds for the change to take effect.
+nginx caches file existence checks for 2 seconds to reduce syscall overhead. After touching or removing the flag, wait up to 2 seconds for the change to take effect.
 
 If issues persist after waiting:
 ```bash
