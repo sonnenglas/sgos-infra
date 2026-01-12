@@ -17,7 +17,7 @@ Cloudflare Tunnel → nginx (port 4200) → App (internal)
 ```
 
 nginx checks for a flag file on every request:
-- **Flag exists:** Serve maintenance page (auto-refreshes every 10 seconds)
+- **Flag exists:** Serve maintenance page (auto-refreshes every 3 seconds)
 - **Flag absent:** Proxy to the application
 
 ## Architecture
@@ -168,7 +168,7 @@ rm /path/to/maintenance-mode/maintenance.flag
 Edit `maintenance-mode/index.html`. The default page includes:
 - Animated spinner
 - "Deploying new version" message
-- Auto-refresh every 10 seconds
+- Auto-refresh every 3 seconds
 - Dark mode support
 - SGOS branding
 
