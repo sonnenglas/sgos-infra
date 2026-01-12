@@ -82,6 +82,34 @@ networks:
 
 This enables the maintenance mode proxy. See [Maintenance Mode](/docs/operations/maintenance-mode) for details.
 
+## Health Check Requirement
+
+Apps must define a Docker healthcheck so the deployment script can verify the app started successfully. The deployment waits for Docker to report the container as "healthy" before exiting maintenance mode.
+
+```yaml
+services:
+  myapp:
+    build: .
+    container_name: sgos-myapp
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s  # Grace period for migrations
+    # ...
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `test` | Command to check health (must return 0 for healthy) |
+| `interval` | Time between checks |
+| `timeout` | Max time for check to complete |
+| `retries` | Consecutive failures before marking unhealthy |
+| `start_period` | Grace period on startup (failures don't count) |
+
+The app must expose a `/health` endpoint that returns HTTP 200 when ready to serve traffic. This endpoint should verify database connectivity and other dependencies.
+
 ## Location
 
 Lives at `/srv/apps/sgos-<name>/app.json` on the server, and in the git repository.

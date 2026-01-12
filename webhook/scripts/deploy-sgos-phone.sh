@@ -50,24 +50,37 @@ sops --input-type dotenv --output-type dotenv -d src/.env.sops > .env
 echo "=== Rebuilding app ==="
 docker compose up -d --build phone db
 
-echo "=== Waiting for app health check ==="
-sleep 10
-HEALTHY=false
-for i in 1 2 3 4 5 6; do
-    # Check health via Docker network (port not exposed to host)
-    if docker exec sgos-proxy curl -sf http://sgos-phone-app:8000/health > /dev/null 2>&1; then
-        echo "App is healthy"
-        HEALTHY=true
-        break
-    fi
-    echo "Waiting for app... ($i/6)"
-    sleep 5
+echo "=== Waiting for Docker health status ==="
+CONTAINER="sgos-phone-app"
+TIMEOUT=120
+ELAPSED=0
+
+while [ $ELAPSED -lt $TIMEOUT ]; do
+    STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER" 2>/dev/null || echo "starting")
+
+    case "$STATUS" in
+        healthy)
+            echo "Container healthy (${ELAPSED}s)"
+            break
+            ;;
+        unhealthy)
+            echo "FAILED: Container marked unhealthy by Docker"
+            echo "Maintenance mode remains active - manual intervention required"
+            echo "Check logs: docker logs $CONTAINER"
+            exit 1
+            ;;
+        *)
+            echo "Waiting... status=$STATUS (${ELAPSED}s/${TIMEOUT}s)"
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+            ;;
+    esac
 done
 
-if [ "$HEALTHY" = "false" ]; then
-    echo "FAILED: App did not become healthy after 40 seconds"
+if [ "$STATUS" != "healthy" ]; then
+    echo "FAILED: Timeout after ${TIMEOUT}s waiting for healthy status"
     echo "Maintenance mode remains active - manual intervention required"
-    echo "Check logs: docker logs sgos-phone-app"
+    echo "Check logs: docker logs $CONTAINER"
     exit 1
 fi
 
