@@ -21,3 +21,10 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example

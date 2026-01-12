@@ -1,0 +1,51 @@
+[
+  {
+    "id": "deploy-sgos-infra",
+    "execute-command": "/scripts/deploy-sgos-infra.sh",
+    "command-working-directory": "/srv/services/sgos-infra",
+    "pass-arguments-to-command": [
+      {
+        "source": "payload",
+        "name": "repository.full_name"
+      },
+      {
+        "source": "payload",
+        "name": "ref"
+      }
+    ],
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "{{ getenv `WEBHOOK_SECRET` }}",
+            "parameter": {
+              "source": "header",
+              "name": "X-Hub-Signature-256"
+            }
+          }
+        },
+        {
+          "match": {
+            "type": "value",
+            "value": "refs/heads/main",
+            "parameter": {
+              "source": "payload",
+              "name": "ref"
+            }
+          }
+        },
+        {
+          "match": {
+            "type": "value",
+            "value": "sonnenglas/sgos-infra",
+            "parameter": {
+              "source": "payload",
+              "name": "repository.full_name"
+            }
+          }
+        }
+      ]
+    }
+  }
+]

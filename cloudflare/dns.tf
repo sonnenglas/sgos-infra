@@ -58,6 +58,15 @@ resource "cloudflare_record" "pocketid" {
   proxied = true
 }
 
+# Webhook - Deployment trigger (NO Zero Trust - GitHub needs access)
+resource "cloudflare_record" "webhook" {
+  zone_id = var.cloudflare_zone_id
+  name    = "webhook"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 # =============================================================================
 # Hornbill Tunnel Services
 # =============================================================================

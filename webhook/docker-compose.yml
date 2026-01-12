@@ -1,0 +1,16 @@
+services:
+  webhook:
+    image: almir/webhook
+    container_name: webhook
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - ./hooks.json:/etc/webhook/hooks.json:ro
+      - ./scripts:/scripts:ro
+      - /srv/services:/srv/services
+    environment:
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+    command: -verbose -hooks=/etc/webhook/hooks.json -hotreload -template
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped

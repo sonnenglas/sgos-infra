@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Toucan tunnel (control server)
-# Services: GlitchTip, SGOS Infra Docs, Dashboard, Beszel, Dozzle, PocketID
+# Services: GlitchTip, SGOS Infra Docs, Dashboard, Beszel, Dozzle, PocketID, Webhook
 resource "cloudflare_zero_trust_tunnel_cloudflared" "toucan" {
   account_id = var.cloudflare_account_id
   name       = "toucan.sgl.as"
@@ -44,6 +44,11 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
     ingress_rule {
       hostname = "id.sgl.as"
       service  = "http://localhost:3080"
+    }
+    # Deployment webhook (public - no Zero Trust)
+    ingress_rule {
+      hostname = "webhook.sgl.as"
+      service  = "http://localhost:9000"
     }
     ingress_rule {
       service = "http_status:404"
