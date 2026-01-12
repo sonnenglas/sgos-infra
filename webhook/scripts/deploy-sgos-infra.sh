@@ -30,7 +30,7 @@ GIT_COMMIT=$(docker run --rm \
   -v /srv/services/sgos-infra:/repo \
   -w /repo \
   --entrypoint sh \
-  alpine/git -c "git rev-parse HEAD")
+  alpine/git -c "git config --global --add safe.directory /repo && git rev-parse HEAD")
 echo "Commit: $GIT_COMMIT"
 
 echo "=== Rebuilding docs container ==="
