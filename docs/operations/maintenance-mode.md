@@ -50,6 +50,7 @@ The nginx sidecar approach:
 - Works with current cloudflared setup (no migration needed)
 - Simple flag-file switching via `if (-f file)` directive
 - Minimal overhead (~10MB RAM per app)
+- File existence cached for 5s (negligible syscall overhead even under high load)
 - No Terraform/Cloudflare API calls during deployment
 
 ## Deployment Flow
@@ -104,18 +105,29 @@ server {
     listen PORT;
     server_name _;
 
-    set $maintenance 0;
-    if (-f /srv/maintenance-mode/maintenance.flag) {
-        set $maintenance 1;
+    # Docker DNS resolver (for container hostname resolution)
+    resolver 127.0.0.11 valid=10s;
+    set $upstream app:INTERNAL_PORT;
+
+    # Cache file existence checks (5s delay acceptable for maintenance toggle)
+    open_file_cache max=10 inactive=60s;
+    open_file_cache_valid 5s;
+    open_file_cache_errors on;
+
+    # Maintenance mode via error_page pattern
+    error_page 503 @maintenance;
+
+    location @maintenance {
+        root /srv/maintenance-mode;
+        try_files /index.html =404;
     }
 
     location / {
-        if ($maintenance = 1) {
-            root /srv/maintenance-mode;
-            rewrite ^(.*)$ /index.html break;
+        if (-f /srv/maintenance-mode/maintenance.flag) {
+            return 503;
         }
 
-        proxy_pass http://app:INTERNAL_PORT;
+        proxy_pass http://$upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
     }
@@ -176,7 +188,9 @@ rm /srv/services/<app>/maintenance-mode/maintenance.flag
 
 ### nginx not detecting flag changes
 
-nginx checks the flag on each request—no reload needed. If issues persist:
+nginx caches file existence checks for 5 seconds to reduce syscall overhead. After touching or removing the flag, wait up to 5 seconds for the change to take effect.
+
+If issues persist after waiting:
 ```bash
 docker compose restart proxy
 ```
