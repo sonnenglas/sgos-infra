@@ -10,222 +10,178 @@ During deployments, apps display a maintenance page instead of 502 errors.
 
 ## How It Works
 
-Each app uses an **nginx reverse proxy** that sits between Cloudflare Tunnel and the application:
+A **single nginx reverse proxy per server** sits between Cloudflare Tunnel and all apps:
 
 ```
-Cloudflare Tunnel → nginx (port 4200) → App (internal)
+Cloudflare Tunnel → sgos-proxy (nginx) → App
+                         ↓
+                   checks flag file
+                   exists? → maintenance.html
+                   no? → forward to app
 ```
 
-nginx checks for flag files on every request:
-- **Global flag** (`/srv/maintenance/global.flag`): All apps show maintenance page
-- **App-specific flag** (`maintenance-mode/maintenance.flag`): Only this app shows maintenance page
-- **No flags:** Proxy to the application
-
-The maintenance page auto-refreshes every 3 seconds.
+That's it. Apps don't need any maintenance-mode code.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  cloudflared (fetches config from Cloudflare)           │
-│       │                                                 │
-│       ▼ routes to localhost:4200                        │
-│  ┌─────────────────┐                                    │
-│  │  nginx          │                                    │
-│  │                 │                                    │
-│  │  /srv/maintenance/global.flag exists? (global)              │
-│  │    yes → serve index.html                            │
-│  │  maintenance-mode/maintenance.flag exists? (app)     │
-│  │    yes → serve index.html                            │
-│  │    no  → reverse_proxy to app                        │
-│  └─────────────────┘                                    │
-│       │                                                 │
-│       ▼                                                 │
-│  ┌─────────────────┐                                    │
-│  │  Application    │                                    │
-│  └─────────────────┘                                    │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  SERVER (Toucan or Hornbill)                                │
+│                                                             │
+│  cloudflared                                                │
+│      │                                                      │
+│      ▼                                                      │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  sgos-proxy (one nginx for ALL apps)                  │  │
+│  │                                                       │  │
+│  │  Port 4200 → if docs.flag exists → maintenance.html  │  │
+│  │              else → proxy to sgos-infra-docs:3000    │  │
+│  │                                                       │  │
+│  │  Port 9000 → if phone.flag exists → maintenance.html │  │
+│  │              else → proxy to sgos-phone-app:8000     │  │
+│  └───────────────────────────────────────────────────────┘  │
+│      │                    │                                 │
+│      ▼                    ▼                                 │
+│  ┌────────┐          ┌─────────┐                           │
+│  │  Docs  │          │  Phone  │  (apps have NO nginx)     │
+│  └────────┘          └─────────┘                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Why nginx?
+## App Requirements
 
-Our cloudflared instances use **token-based remote configuration** (managed by Terraform). This means we can't quickly switch ports locally—changes would require `terraform apply`.
-
-The nginx sidecar approach:
-- Works with current cloudflared setup (no migration needed)
-- Simple flag-file switching via `if (-f file)` directive
-- Minimal overhead (~10MB RAM per app)
-- File existence cached for 2s (negligible syscall overhead even under high load)
-- No Terraform/Cloudflare API calls during deployment
-
-## Deployment Flow
-
-1. **Enter maintenance:** `touch maintenance-mode/maintenance.flag`
-2. **nginx detects flag:** Serves maintenance page to all visitors
-3. **Rebuild app:** Container rebuilds (users see maintenance page)
-4. **Exit maintenance:** `rm maintenance-mode/maintenance.flag`
-5. **nginx resumes proxying:** Traffic flows to the updated app
-
-## Global Maintenance Mode
-
-For server-wide maintenance (OS updates, hardware work, etc.), use the global flag:
-
-```bash
-# Put ALL apps in maintenance mode
-touch /srv/maintenance/global.flag
-
-# Resume all apps
-rm /srv/maintenance/global.flag
-```
-
-This affects every app that uses the nginx maintenance mode pattern. Individual apps can still be deployed while global maintenance is active.
-
-## App-Specific Maintenance Mode
-
-For individual app deployments (automatically handled by deploy scripts):
-
-### Enter Maintenance
-
-```bash
-# On the server
-touch /srv/services/<app>/maintenance-mode/maintenance.flag
-```
-
-### Exit Maintenance
-
-```bash
-rm /srv/services/<app>/maintenance-mode/maintenance.flag
-```
-
-### Example: SGOS Docs
-
-```bash
-# Enter maintenance
-touch /srv/services/sgos-infra/maintenance-mode/maintenance.flag
-
-# Exit maintenance
-rm /srv/services/sgos-infra/maintenance-mode/maintenance.flag
-```
-
-## Adding Maintenance Mode to a New App
-
-### 1. Create maintenance-mode directory
-
-Copy the `maintenance-mode/` folder from sgos-infra or create:
-
-```
-maintenance-mode/
-├── index.html    # Maintenance page (auto-refresh enabled)
-└── nginx.conf    # nginx configuration
-```
-
-### 2. Create nginx.conf
-
-```nginx
-server {
-    listen PORT;
-    server_name _;
-
-    # Docker DNS resolver (for container hostname resolution)
-    resolver 127.0.0.11 valid=10s;
-    set $upstream app:INTERNAL_PORT;
-
-    # Cache file existence checks (2s delay acceptable for maintenance toggle)
-    open_file_cache max=10 inactive=60s;
-    open_file_cache_valid 2s;
-    open_file_cache_errors on;
-
-    # Maintenance mode via error_page pattern
-    error_page 503 @maintenance;
-
-    location @maintenance {
-        root /srv/maintenance-mode;
-        try_files /index.html =404;
-    }
-
-    location / {
-        # Global maintenance mode (all apps)
-        if (-f /srv/maintenance/global.flag) {
-            return 503;
-        }
-
-        # App-specific maintenance mode
-        if (-f /srv/maintenance-mode/maintenance.flag) {
-            return 503;
-        }
-
-        proxy_pass http://$upstream;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-    }
-}
-```
-
-### 3. Update docker-compose.yml
+Apps only need to join the `sgos` Docker network:
 
 ```yaml
 services:
-  proxy:
-    image: nginx:alpine
-    ports:
-      - "127.0.0.1:EXTERNAL_PORT:EXTERNAL_PORT"
-    volumes:
-      - ./maintenance-mode:/srv/maintenance-mode:ro
-      - ./maintenance-mode/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - app
-    restart: unless-stopped
+  myapp:
+    build: .
+    container_name: sgos-myapp
+    # NO port binding to host - proxy handles it
+    networks:
+      - sgos
 
-  app:
-    # ... existing config, remove external port mapping ...
+networks:
+  sgos:
+    external: true
 ```
 
-### 4. Update deploy script
+**That's the only requirement.** No nginx config, no maintenance-mode directory, nothing else.
 
-Add flag touch/remove around the rebuild step:
+## Server Directory Structure
+
+```
+/srv/proxy/<server>/
+├── docker-compose.yml    # Single nginx container
+├── nginx.conf            # All app routes
+├── maintenance.html      # Shared maintenance page
+└── flags/                # Per-app flags (runtime only)
+    ├── docs.flag
+    └── phone.flag
+```
+
+Configuration is managed in the infra repo at `proxy/toucan/` and `proxy/hornbill/`.
+
+## Deployment Flow
+
+1. **Deploy script touches flag:** `/srv/proxy/<server>/flags/<app>.flag`
+2. **nginx serves maintenance page** (cached 2s, so up to 2s delay)
+3. **App rebuilds** (users see maintenance page)
+4. **Deploy script removes flag**
+5. **nginx resumes proxying** (again, up to 2s delay)
+
+## Manual Maintenance Mode
+
+### Single App
 
 ```bash
-touch /path/to/maintenance-mode/maintenance.flag
-# ... rebuild app ...
-rm /path/to/maintenance-mode/maintenance.flag
+# Enter maintenance
+touch /srv/proxy/toucan/flags/docs.flag
+
+# Exit maintenance
+rm /srv/proxy/toucan/flags/docs.flag
 ```
 
-## Customizing the Maintenance Page
+### Global (All Apps)
 
-Edit `maintenance-mode/index.html`. The default page includes:
-- Animated spinner
-- "Deploying new version" message
-- Auto-refresh every 3 seconds
-- Dark mode support
-- SGOS branding
+```bash
+# Enter maintenance for ALL apps on server
+touch /srv/proxy/toucan/flags/global.flag
+
+# Exit maintenance
+rm /srv/proxy/toucan/flags/global.flag
+```
+
+## Adding a New App
+
+1. **Add server block** to `/srv/proxy/<server>/nginx.conf`:
+   ```nginx
+   server {
+       listen <PORT>;
+       resolver 127.0.0.11 valid=10s;
+       set $upstream sgos-<app>:<internal-port>;
+
+       error_page 503 @maintenance;
+       location @maintenance {
+           root /srv;
+           try_files /maintenance.html =503;
+       }
+
+       location / {
+           if (-f /srv/flags/global.flag) { return 503; }
+           if (-f /srv/flags/<app>.flag) { return 503; }
+           proxy_pass http://$upstream;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+
+2. **Add port** to `/srv/proxy/<server>/docker-compose.yml`:
+   ```yaml
+   ports:
+     - "127.0.0.1:<PORT>:<PORT>"
+   ```
+
+3. **Reload nginx:**
+   ```bash
+   docker exec sgos-proxy nginx -s reload
+   ```
+
+4. **Update deploy script** to touch/remove flag at `/srv/proxy/<server>/flags/<app>.flag`
 
 ## Troubleshooting
 
-### Page stuck on maintenance
+### Stuck on maintenance page
 
-Check if the flag file was removed:
+Check if flag exists:
 ```bash
-ls -la /srv/services/<app>/maintenance-mode/
+ls -la /srv/proxy/toucan/flags/
 ```
 
-Remove it manually if needed:
+Remove manually:
 ```bash
-rm /srv/services/<app>/maintenance-mode/maintenance.flag
+rm /srv/proxy/toucan/flags/docs.flag
 ```
 
-### nginx not detecting flag changes
+### 502 Bad Gateway after container restart
 
-nginx caches file existence checks for 2 seconds to reduce syscall overhead. After touching or removing the flag, wait up to 2 seconds for the change to take effect.
-
-If issues persist after waiting:
+nginx caches DNS for 10 seconds. Either wait, or reload nginx:
 ```bash
-docker compose restart proxy
+docker exec sgos-proxy nginx -s reload
 ```
 
-### 502 still showing
+### App not reachable through proxy
 
-Ensure the proxy is running and the port mapping is correct:
+Verify app is on the `sgos` network:
 ```bash
-docker compose ps
-curl -I http://localhost:4200
+docker inspect <container> --format '{{json .NetworkSettings.Networks}}' | jq 'keys'
+```
+
+Connect if missing:
+```bash
+docker network connect sgos <container>
 ```

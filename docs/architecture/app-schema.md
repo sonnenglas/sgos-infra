@@ -60,6 +60,28 @@ Every SGOS app must have these files in its repository:
 | `.sops.yaml` | SOPS configuration |
 | `docker-compose.yml` | Container configuration |
 
+## Docker Network Requirement
+
+Apps must join the `sgos` external network for the centralized proxy to reach them:
+
+```yaml
+services:
+  myapp:
+    build: .
+    container_name: sgos-myapp
+    networks:
+      - sgos
+      - internal  # optional, for DB isolation
+
+networks:
+  sgos:
+    external: true
+  internal:  # optional
+    driver: bridge
+```
+
+This enables the maintenance mode proxy. See [Maintenance Mode](/docs/operations/maintenance-mode) for details.
+
 ## Location
 
 Lives at `/srv/apps/sgos-<name>/app.json` on the server, and in the git repository.
