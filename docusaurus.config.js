@@ -1,5 +1,8 @@
 // @ts-check
 
+const gitCommit = process.env.GIT_COMMIT || 'dev';
+const gitCommitShort = gitCommit.substring(0, 7);
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'SGOS Docs',
@@ -61,9 +64,10 @@ const config = {
             label: 'Docs',
           },
           {
-            href: 'https://github.com/sonnenglas/sgos-infra',
-            label: 'GitHub',
+            href: `https://github.com/sonnenglas/sgos-infra/commit/${gitCommit}`,
+            label: gitCommitShort,
             position: 'right',
+            title: 'View deployed commit on GitHub',
           },
         ],
       },
