@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Deploy sgos-infra documentation
 # Triggered by GitHub webhook on push to main
 
