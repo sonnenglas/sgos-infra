@@ -1,0 +1,18 @@
+services:
+  proxy:
+    image: nginx:alpine
+    container_name: sgos-proxy
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"
+      # Add more ports as apps are added
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./maintenance.html:/srv/maintenance.html:ro
+      - ./flags:/srv/flags:ro
+    networks:
+      - sgos
+
+networks:
+  sgos:
+    external: true

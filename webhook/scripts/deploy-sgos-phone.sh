@@ -1,4 +1,7 @@
 #!/bin/sh
+# Deploy sgos-phone to Hornbill
+# Triggered by GitHub webhook on push to main
+
 set -e
 
 echo "=== Deploying sgos-phone to Hornbill ==="
@@ -9,10 +12,11 @@ ssh -i /root/.ssh/deploy_hornbill -o StrictHostKeyChecking=no stefan@100.67.57.2
 set -e
 
 APP_DIR=/srv/apps/sgos-phone
-MAINTENANCE_FLAG="$APP_DIR/src/maintenance-mode/maintenance.flag"
+PROXY_FLAG="/srv/proxy/hornbill/flags/phone.flag"
 
 echo "=== Entering maintenance mode ==="
-touch "$MAINTENANCE_FLAG"
+mkdir -p /srv/proxy/hornbill/flags
+touch "$PROXY_FLAG"
 
 echo "=== Pulling latest changes ==="
 cd "$APP_DIR/src"
@@ -23,7 +27,7 @@ echo "=== Decrypting secrets ==="
 cd "$APP_DIR"
 sops --input-type dotenv --output-type dotenv -d src/.env.sops > .env
 
-echo "=== Rebuilding app (proxy stays up for maintenance page) ==="
+echo "=== Rebuilding app ==="
 docker compose up -d --build phone db
 
 echo "=== Waiting for app health check ==="
@@ -37,11 +41,8 @@ for i in 1 2 3 4 5; do
     sleep 5
 done
 
-echo "=== Ensuring proxy is running ==="
-docker compose up -d proxy
-
 echo "=== Exiting maintenance mode ==="
-rm -f "$MAINTENANCE_FLAG"
+rm -f "$PROXY_FLAG"
 
 echo "=== Final health check ==="
 curl -sf http://127.0.0.1:9000/health || echo "Warning: Health check via proxy failed"
