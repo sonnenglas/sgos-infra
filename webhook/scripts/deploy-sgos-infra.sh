@@ -1,6 +1,7 @@
 #!/bin/sh
 # Deploy sgos-infra documentation
 # Triggered by GitHub webhook on push to main
+# Runs inside webhook container, uses docker to execute on host
 
 set -e
 
@@ -12,13 +13,14 @@ echo "Repository: $REPO"
 echo "Ref: $REF"
 echo "Time: $(date)"
 
-cd /srv/services/sgos-infra
-
 echo "=== Pulling latest changes ==="
-git pull origin main
+docker run --rm \
+  -v /srv/services/sgos-infra:/repo \
+  -w /repo \
+  alpine/git pull origin main
 
 echo "=== Restarting documentation service ==="
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml down
+docker compose -f /srv/services/sgos-infra/docker-compose.prod.yml up -d
 
 echo "=== Deploy complete ==="

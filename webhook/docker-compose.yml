@@ -8,6 +8,8 @@ services:
       - ./hooks.json:/etc/webhook/hooks.json:ro
       - ./scripts:/scripts:ro
       - /srv/services:/srv/services
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     command: -verbose -hooks=/etc/webhook/hooks.json -hotreload -template
