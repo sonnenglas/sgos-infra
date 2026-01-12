@@ -58,6 +58,15 @@ resource "cloudflare_record" "grafana" {
   proxied = true
 }
 
+# SGOS Status - App Status Page
+resource "cloudflare_record" "sgos_status" {
+  zone_id = var.cloudflare_zone_id
+  name    = "sgos-status"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 # PocketID - Identity Provider (NO Zero Trust - it IS the identity provider)
 resource "cloudflare_record" "pocketid" {
   zone_id = var.cloudflare_zone_id

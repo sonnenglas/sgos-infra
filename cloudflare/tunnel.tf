@@ -46,6 +46,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
       service  = "http://localhost:3001"
     }
     ingress_rule {
+      hostname = "sgos-status.sgl.as"
+      service  = "http://localhost:3004"
+    }
+    ingress_rule {
       hostname = "id.sgl.as"
       service  = "http://localhost:3080"
     }

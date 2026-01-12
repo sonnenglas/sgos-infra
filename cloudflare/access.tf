@@ -110,3 +110,24 @@ resource "cloudflare_zero_trust_access_policy" "grafana_google" {
     email_domain = ["sonnenglas.net"]
   }
 }
+
+# SGOS Status - App Status Page
+resource "cloudflare_zero_trust_access_application" "sgos_status" {
+  zone_id          = var.cloudflare_zone_id
+  name             = "SGOS Status"
+  domain           = "sgos-status.sgl.as"
+  type             = "self_hosted"
+  session_duration = "24h"
+}
+
+resource "cloudflare_zero_trust_access_policy" "sgos_status_google" {
+  zone_id        = var.cloudflare_zone_id
+  application_id = cloudflare_zero_trust_access_application.sgos_status.id
+  name           = "Require Sonnenglas Google"
+  precedence     = 1
+  decision       = "allow"
+
+  include {
+    email_domain = ["sonnenglas.net"]
+  }
+}
