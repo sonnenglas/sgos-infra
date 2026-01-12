@@ -23,6 +23,7 @@ Real-time status page showing health, version, and deployment info for all SGOS 
 - App version display
 - Last deployment time (relative)
 - Direct links to GitHub commits
+- **Scheduled jobs viewer** - shows all cron jobs across servers
 - Auto-refresh every 60 seconds
 - "All Systems Operational" summary banner
 
@@ -108,6 +109,15 @@ Alpine nginx container serving static files on port 3004.
       "commitMessage": "Update healthcheck...",
       "commitUrl": "https://github.com/sonnenglas/sgos-phone/commit/...",
       "repoUrl": "https://github.com/sonnenglas/sgos-phone"
+    }
+  ],
+  "crons": [
+    {
+      "server": "toucan",
+      "schedule": "0 3 * * *",
+      "human": "Daily at 03:00",
+      "command": "/srv/services/backups/backup-orchestrator.sh",
+      "name": "backup-orchestrator"
     }
   ]
 }
