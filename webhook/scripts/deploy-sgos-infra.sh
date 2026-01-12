@@ -43,8 +43,8 @@ sleep 10
 echo "=== Exiting maintenance mode ==="
 rm -f "$MAINTENANCE_FLAG"
 
-echo "=== Ensuring Caddy is running ==="
-GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d caddy
+echo "=== Ensuring proxy is running ==="
+GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d proxy
 
 echo "=== Deploy complete ==="
 echo "Deployed commit: $GIT_COMMIT"
