@@ -69,7 +69,7 @@ ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token <token>
 - **No local config files** exist on the servers
 - **Changes require `terraform apply`** - there's no quick local switching
 
-This is why apps use a [Caddy sidecar for maintenance mode](./maintenance-mode.md) instead of switching cloudflared config directly.
+This is why apps use an [nginx sidecar for maintenance mode](./maintenance-mode.md) instead of switching cloudflared config directly.
 
 ### Checking Status
 
