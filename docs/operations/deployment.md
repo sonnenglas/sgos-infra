@@ -17,7 +17,7 @@ Apps are deployed as Docker Compose stacks with Cloudflare Tunnel for external a
 | External access | Cloudflare Tunnel |
 | Reverse proxy | Optional (Traefik) - currently using direct tunnel routing |
 | Configuration | app.json + docker-compose.yml |
-| Secrets | .env files (not in git) |
+| Secrets | SOPS-encrypted .env.sops files (see [Secrets Management](./secrets)) |
 
 ## Directory Structure
 
@@ -49,9 +49,42 @@ Apps are deployed as Docker Compose stacks with Cloudflare Tunnel for external a
 
 ## Workflow
 
+### Manual Deployment
+
 **Deploy:** SSH to server, git pull, docker compose up -d --build
 
 **Rollback:** git checkout to previous tag, rebuild. Check `app.json` migration field first—if `breaking`, restore database before rollback.
+
+### Auto-Deployment (sgos-infra)
+
+The documentation site deploys automatically when pushing to `main`:
+
+```
+Push to main → GitHub webhook → webhook.sgl.as → Toucan pulls & restarts
+```
+
+**How it works:**
+
+1. GitHub sends POST to `https://webhook.sgl.as/hooks/deploy-sgos-infra`
+2. [adnanh/webhook](https://github.com/adnanh/webhook) verifies HMAC signature
+3. Triggers `deploy-sgos-infra.sh` which:
+   - Runs `git pull` via alpine/git container
+   - Restarts the Docusaurus container
+
+**Configuration:**
+
+| File | Purpose |
+|------|---------|
+| `webhook/docker-compose.yml` | Webhook service |
+| `webhook/hooks.json` | Trigger rules (repo, branch, signature) |
+| `webhook/scripts/deploy-sgos-infra.sh` | Deployment script |
+| `/srv/services/webhook/.env` | Secret (not in git) |
+
+**Security:**
+
+- HMAC-SHA256 signature verification
+- Only triggers on `main` branch
+- Only triggers for `sonnenglas/sgos-infra` repo
 
 ## Routing
 

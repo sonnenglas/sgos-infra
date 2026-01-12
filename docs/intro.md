@@ -20,6 +20,7 @@ SGOS is an API-first, modular operating system for Sonnenglas business operation
 | [API Strategy](./architecture/api-strategy) | API versioning and contracts |
 | [App Schema](./architecture/app-schema) | Standard app.json configuration |
 | [Deployment](./operations/deployment) | How to deploy apps |
+| [Secrets](./operations/secrets) | Encrypting secrets with SOPS |
 | [Backups](./operations/backups) | Backup strategy and restore procedures |
 
 ## Infrastructure Overview
@@ -42,6 +43,7 @@ See [Architecture Overview](./architecture/overview) for server specs and networ
 - **Monitoring:** Beszel (server metrics) + Dozzle (Docker logs)
 - **Error Tracking:** GlitchTip
 - **Identity:** PocketID (OIDC provider)
+- **Secrets:** SOPS + age encryption
 - **Backups:** Toucan (local) → Cloudflare R2 (offsite) via Restic
 
 ## Services
