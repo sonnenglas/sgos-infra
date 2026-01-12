@@ -54,7 +54,8 @@ echo "=== Waiting for app health check ==="
 sleep 10
 HEALTHY=false
 for i in 1 2 3 4 5 6; do
-    if curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
+    # Check health via Docker network (port not exposed to host)
+    if docker exec sgos-proxy curl -sf http://sgos-phone-app:8000/health > /dev/null 2>&1; then
         echo "App is healthy"
         HEALTHY=true
         break
