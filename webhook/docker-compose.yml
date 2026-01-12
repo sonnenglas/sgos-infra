@@ -10,9 +10,10 @@ services:
       - ./scripts:/scripts
       - /srv/services:/srv/services
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/stefan/.ssh:/root/.ssh:ro
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-    entrypoint: ["/bin/sh", "-c", "apk add --no-cache docker-cli docker-cli-compose && exec /usr/local/bin/webhook -verbose -hooks=/etc/webhook/hooks.json -hotreload -template"]
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache docker-cli docker-cli-compose openssh-client && exec /usr/local/bin/webhook -verbose -hooks=/etc/webhook/hooks.json -hotreload -template"]
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
