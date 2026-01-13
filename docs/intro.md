@@ -34,20 +34,19 @@ This is why we don't use an existing ERP — they weren't designed for an AI-nat
 
 All business applications built on the SGOS platform.
 
-| App | Function | System | Domain | Status |
-|-----|----------|--------|--------|--------|
-| **Phone** | Voicemail processing & notifications | `sgos-phone` | [phone.sgl.as](https://phone.sgl.as) | Live |
-| **Xhosa** | Order management, CRM, invoicing | `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | Planned |
-| **Docflow** | Document management (invoices, contracts) | `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | Planned |
-| **Accounting** | Financial transactions, VAT, exports | `sgos-accounting` | [accounting.sgl.as](https://accounting.sgl.as) | Planned |
-| **Inventory** | Stock management, product catalog | `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | Planned |
-| **MRP** | Manufacturing & production planning | `sgos-mrp` | [mrp.sgl.as](https://mrp.sgl.as) | Planned |
-| **Ufudu** | Warehouse fulfillment (pick/pack) | `sgos-ufudu` | [ufudu.sgl.as](https://ufudu.sgl.as) | Planned |
-| **Human in the Soup** | Central to-do lists, task management | `sgos-soup` | [soup.sgl.as](https://soup.sgl.as) | Planned |
-| **Anansi** | Internal AI chatbot & assistant | `sgos-anansi` | [anansi.sgl.as](https://anansi.sgl.as) | Planned |
-| **Ikhaya** | Internal knowledge base | `sgos-ikhaya` | [ikhaya.sgl.as](https://ikhaya.sgl.as) | Planned |
-| **Directory** | User directory for all apps | `sgos-directory` | [directory.sgl.as](https://directory.sgl.as) | Planned |
-| **Message Bus** | Event bus for async communication | `sgos-bus` | [bus.sgl.as](https://bus.sgl.as) | Planned |
+| App | Description | Domain | Status |
+|-----|-------------|--------|--------|
+| **Phone** | Voicemail processing & notifications · `sgos-phone` | [phone.sgl.as](https://phone.sgl.as) | 🟢 Live |
+| **Ikhaya** | Internal knowledge base · `sgos-ikhaya` | [ikhaya.sgl.as](https://ikhaya.sgl.as) | 🟢 Live |
+| **Docflow** | Document management (invoices, contracts) · `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | 🟡 Beta |
+| **Ufudu** | Warehouse fulfillment (pick/pack) · `sgos-ufudu` | [ufudu.sgl.as](https://ufudu.sgl.as) | 🟡 Beta |
+| **Accounting** | Financial transactions, VAT, exports · `sgos-accounting` | [accounting.sgl.as](https://accounting.sgl.as) | 🟠 Alpha |
+| **Inventory** | Stock management, product catalog · `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | 🟠 Alpha |
+| **Directory** | User directory for all apps · `sgos-directory` | [directory.sgl.as](https://directory.sgl.as) | 🟠 Alpha |
+| **Xhosa** | Order management, CRM, invoicing · `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | 🔵 Concept |
+| **Soup** | Central to-do lists, task management · `sgos-soup` | [soup.sgl.as](https://soup.sgl.as) | 🔵 Concept |
+| **Anansi** | Internal AI chatbot & assistant · `sgos-anansi` | [anansi.sgl.as](https://anansi.sgl.as) | 🔵 Concept |
+| **MRP** | Manufacturing & production planning · `sgos-mrp` | [mrp.sgl.as](https://mrp.sgl.as) | ⚪ Planned |
 
 See [Apps Overview](./apps/overview) for detailed descriptions and API documentation.
 
@@ -68,12 +67,13 @@ Two Netcup VPS servers in Nuremberg, connected via Tailscale mesh network, with 
 
 Services that support the SGOS platform.
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| SGOS Status | [sgos-status.sgl.as](https://sgos-status.sgl.as) | Real-time app health dashboard |
-| Grafana | [grafana.sgl.as](https://grafana.sgl.as) | Log aggregation (Loki) |
-| GlitchTip | [glitchtip.sgl.as](https://glitchtip.sgl.as) | Error tracking |
-| PocketID | [id.sgl.as](https://id.sgl.as) | Identity provider (OIDC) |
+| Service | URL | Purpose | Status |
+|---------|-----|---------|--------|
+| SGOS Status | [sgos-status.sgl.as](https://sgos-status.sgl.as) | Real-time app health dashboard | 🟢 Live |
+| Grafana | [grafana.sgl.as](https://grafana.sgl.as) | Log aggregation (Loki) | 🟢 Live |
+| GlitchTip | [glitchtip.sgl.as](https://glitchtip.sgl.as) | Error tracking | 🟢 Live |
+| PocketID | [id.sgl.as](https://id.sgl.as) | Identity provider (OIDC) | 🟢 Live |
+| Message Bus | — | Event bus for async communication | 🔵 Concept |
 
 ### Tech Stack
 
