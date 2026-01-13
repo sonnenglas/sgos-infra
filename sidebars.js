@@ -2,6 +2,7 @@
 const sidebars = {
   docs: [
     'intro',
+    'rationale',
     {
       type: 'category',
       label: 'Apps',
