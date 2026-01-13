@@ -1,6 +1,6 @@
 ---
 title: App Schema (app.json)
-sidebar_position: 3
+sidebar_position: 2
 description: Standard configuration file for SGOS applications
 ---
 
@@ -80,7 +80,7 @@ networks:
     driver: bridge
 ```
 
-This enables the maintenance mode proxy. See [Maintenance Mode](/docs/operations/maintenance-mode) for details.
+This enables the maintenance mode proxy. See [Deployment](../infrastructure/deployment) for details.
 
 ## Health Check Requirement
 

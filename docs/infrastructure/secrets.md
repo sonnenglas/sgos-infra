@@ -1,6 +1,6 @@
 ---
-title: Secrets Management
-sidebar_position: 3
+title: Secrets
+sidebar_position: 5
 description: Encrypting secrets with SOPS and age
 ---
 

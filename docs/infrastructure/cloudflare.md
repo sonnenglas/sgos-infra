@@ -1,7 +1,7 @@
 ---
 title: Cloudflare
-sidebar_position: 3
-description: Infrastructure as code with Terraform
+sidebar_position: 6
+description: Tunnels, DNS, and Zero Trust access via Terraform
 ---
 
 # Cloudflare
@@ -69,7 +69,7 @@ ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token <token>
 - **No local config files** exist on the servers
 - **Changes require `terraform apply`** - there's no quick local switching
 
-This is why apps use an [nginx sidecar for maintenance mode](./maintenance-mode.md) instead of switching cloudflared config directly.
+This is why apps use an nginx sidecar for maintenance mode instead of switching cloudflared config directly.
 
 ### Checking Status
 
@@ -77,4 +77,41 @@ This is why apps use an [nginx sidecar for maintenance mode](./maintenance-mode.
 # On any server
 systemctl status cloudflared
 journalctl -u cloudflared -f
+```
+
+## Zero Trust Access Policies
+
+All services are protected by Cloudflare Access. Authentication options:
+
+| Method | Use Case |
+|--------|----------|
+| Google Workspace | Primary login for team members |
+| PocketID (OIDC) | Users without Google accounts |
+| Service Tokens | API and automation access |
+
+### Adding a Protected App
+
+```hcl
+# In access.tf
+resource "cloudflare_zero_trust_access_application" "my_app" {
+  zone_id          = var.zone_id
+  name             = "My App"
+  domain           = "myapp.sgl.as"
+  type             = "self_hosted"
+  session_duration = "24h"
+}
+
+resource "cloudflare_zero_trust_access_policy" "my_app" {
+  application_id = cloudflare_zero_trust_access_application.my_app.id
+  zone_id        = var.zone_id
+  name           = "Allow Google"
+  decision       = "allow"
+  precedence     = 1
+
+  include {
+    gsuite {
+      identity_provider_id = var.google_idp_id
+    }
+  }
+}
 ```

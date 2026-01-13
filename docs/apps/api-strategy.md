@@ -1,6 +1,6 @@
 ---
 title: API Strategy
-sidebar_position: 2
+sidebar_position: 3
 description: API versioning and contracts
 ---
 

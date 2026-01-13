@@ -1,7 +1,7 @@
 ---
 title: Backups
-sidebar_position: 2
-description: Backup strategy and operations
+sidebar_position: 4
+description: Backup strategy and restore procedures
 ---
 
 # Backups
@@ -67,6 +67,8 @@ Cloudflare R2 (sonnenglas-backups) ← Offsite storage
 | `/srv/backups/status.json` | Latest backup status per app |
 | `/srv/backups/backup.log` | Backup run log |
 
+---
+
 ## Operations
 
 ### Check Backup Status
@@ -96,21 +98,28 @@ restic snapshots
 /srv/services/backups/backup-orchestrator.sh
 ```
 
-### Restore from Backup
+---
+
+## Restore Procedures
+
+### Setup
 
 ```bash
 cd /srv/services/backups
 source .env
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
+```
 
-# List snapshots
+### List Available Snapshots
+
+```bash
 restic snapshots
 
-# Restore specific snapshot to temp directory
-restic restore <snapshot-id> --target /tmp/restore
-
-# Or restore latest
-restic restore latest --target /tmp/restore
+# Output:
+# ID        Time                 Host    Tags
+# a1b2c3d4  2026-01-10 03:00:05  toucan
+# e5f6g7h8  2026-01-11 03:00:03  toucan
+# i9j0k1l2  2026-01-12 03:00:04  toucan
 ```
 
 ### Browse Snapshot Contents
@@ -119,6 +128,8 @@ restic restore latest --target /tmp/restore
 restic ls latest
 restic ls latest /srv/backups/staging/sgos-phone/
 ```
+
+---
 
 ## Restore Examples
 
@@ -181,13 +192,7 @@ scp /tmp/restore/srv/backups/staging/sgos-phone/voicemails/*.mp3 \
 # List snapshots with timestamps
 restic snapshots
 
-# Output shows:
-# ID        Time                 Host    Tags
-# a1b2c3d4  2026-01-10 03:00:05  toucan
-# e5f6g7h8  2026-01-11 03:00:03  toucan
-# i9j0k1l2  2026-01-12 03:00:04  toucan
-
-# Restore from January 10th
+# Restore from January 10th (using snapshot ID)
 restic restore a1b2c3d4 --target /tmp/restore-jan10
 ```
 
@@ -206,14 +211,15 @@ docker exec -i sgos-phone-db psql -U postgres -d phone < /tmp/database.sql
 docker compose up -d phone
 ```
 
-**Note:** Currently, backups are daily SQL dumps. For point-in-time recovery, WAL archiving would need to be configured in the app's PostgreSQL setup.
+**Note:** Currently, backups are daily SQL dumps. For point-in-time recovery, WAL archiving would need to be configured.
+
+---
 
 ## Backup Verification
 
 ### Verify Backup Integrity
 
 ```bash
-# On Toucan
 cd /srv/services/backups
 source .env
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
@@ -240,6 +246,8 @@ docker exec -i sgos-phone-db psql -U postgres -c "CREATE DATABASE phone_test;"
 docker exec -i sgos-phone-db psql -U postgres -d phone_test < /tmp/verify/.../database.sql
 docker exec -i sgos-phone-db psql -U postgres -c "DROP DATABASE phone_test;"
 ```
+
+---
 
 ## Adding a New App
 

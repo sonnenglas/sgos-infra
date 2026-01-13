@@ -1,10 +1,10 @@
 ---
-title: Architecture Overview
+title: Architecture
 sidebar_position: 1
 description: Network topology and server setup
 ---
 
-# Architecture Overview
+# Architecture
 
 ## Servers
 
@@ -22,19 +22,20 @@ Both servers are hosted by Netcup in Nuremberg, Germany.
 
 ### Toucan (Control)
 
-- Beszel (server monitoring)
-- Dozzle (Docker log viewer)
-- Homepage (dashboard)
+Orchestration, monitoring, and shared services:
+- Grafana + Loki (log aggregation)
 - GlitchTip (error tracking)
 - PocketID (identity provider)
-- Watchtower (auto-updates)
+- SGOS Status page
+- Webhook deployment receiver
 - Backup orchestration
+- Watchtower (auto-updates)
 
 ### Hornbill (Apps)
 
-- SGOS applications
-- Beszel agent
-- Dozzle agent
+SGOS business applications:
+- All `sgos-*` applications
+- Alloy (log shipping to Toucan)
 - Cloudflare Tunnel
 
 ## Network Topology
@@ -70,3 +71,45 @@ Both servers are hosted by Netcup in Nuremberg, Germany.
 Every app gets its own Postgres instance for isolation and portability.
 
 Cross-app analytics (when needed): read-only analytics database synced nightly from app databases.
+
+## Directory Structure
+
+### Hornbill (App Server)
+
+```
+/srv/
+├── apps/
+│   └── sgos-<name>/
+│       ├── app.json          # App metadata
+│       ├── docker-compose.yml
+│       ├── .env              # Secrets (decrypted)
+│       ├── src/              # Source code (git clone)
+│       ├── data/             # Persistent data
+│       └── backup/           # Backup output
+├── proxy/                    # Maintenance mode proxy
+│   └── hornbill/
+│       ├── nginx.conf
+│       ├── maintenance.html
+│       └── flags/
+└── services/
+    └── alloy/                # Log shipping
+```
+
+### Toucan (Control Server)
+
+```
+/srv/
+├── config/
+│   └── monitoring/           # Grafana, Loki, Alloy
+├── services/
+│   ├── status/               # Status page
+│   ├── webhook/              # GitHub webhook receiver
+│   ├── backups/              # Backup orchestrator
+│   ├── glitchtip/            # Error tracking
+│   └── sgos-infra/           # This documentation
+├── backups/
+│   ├── staging/              # Collected backups
+│   └── status.json
+└── proxy/
+    └── toucan/               # Maintenance mode proxy
+```

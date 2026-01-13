@@ -4,89 +4,129 @@ sidebar_position: 1
 slug: /
 ---
 
-# SGOS Documentation
-
-Welcome to the Sonnenglas Operating System (SGOS) infrastructure documentation.
+# SGOS - Sonnenglas Operating System
 
 ## What is SGOS?
 
-SGOS is an API-first, modular operating system for Sonnenglas business operations. All in-house developed apps communicate through well-defined APIs, enabling an agentic, AI-driven business management approach.
+SGOS is the internal operating system for Sonnenglas. It defines how we operate globally as a company.
 
-## Quick Links
+Think of it as an **in-house ERP system**, but built differently:
 
-| Topic | Description |
-|-------|-------------|
-| [SGOS Concept](./concept/sgos) | The vision and architecture of SGOS |
-| [API Strategy](./architecture/api-strategy) | API versioning and contracts |
-| [App Schema](./architecture/app-schema) | Standard app.json configuration |
-| [Deployment](./operations/deployment) | How to deploy apps |
-| [Secrets](./operations/secrets) | Encrypting secrets with SOPS |
-| [Backups](./operations/backups) | Backup strategy and restore procedures |
+- **Modular architecture** — Small, focused apps that do one thing well
+- **API-first design** — All apps communicate through well-defined APIs
+- **Data ownership** — We fully own our data and expose it through APIs
+- **AI-native** — APIs are designed to be consumed by UIs, LLMs, and autonomous agents
+
+### Why build our own?
+
+The innovation is in the approach: **APIs are contracts between apps**. This means:
+
+- Any app can consume data from any other app
+- LLMs can read and act on business data through the same APIs humans use
+- Agents can orchestrate workflows across multiple systems
+- We're not locked into vendor ecosystems or data formats
+
+This is why we don't use an existing ERP — they weren't designed for an AI-native world.
 
 ---
 
-## System Overview
+## SGOS Applications
 
-### 1. Infrastructure
+All business applications built on the SGOS platform.
+
+| App | Function | System | Domain | Status |
+|-----|----------|--------|--------|--------|
+| **Phone** | Voicemail processing & notifications | `sgos-phone` | [phone.sgl.as](https://phone.sgl.as) | Live |
+| **Xhosa** | Order management, CRM, invoicing | `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | Planned |
+| **Docflow** | Document management (invoices, contracts) | `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | Planned |
+| **Accounting** | Financial transactions, VAT, exports | `sgos-accounting` | [accounting.sgl.as](https://accounting.sgl.as) | Planned |
+| **Inventory** | Stock management, product catalog | `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | Planned |
+| **MRP** | Manufacturing & production planning | `sgos-mrp` | [mrp.sgl.as](https://mrp.sgl.as) | Planned |
+| **Ufudu** | Warehouse fulfillment (pick/pack) | `sgos-ufudu` | [ufudu.sgl.as](https://ufudu.sgl.as) | Planned |
+| **Human in the Soup** | Central to-do lists, task management | `sgos-soup` | [soup.sgl.as](https://soup.sgl.as) | Planned |
+| **Anansi** | Internal AI chatbot & assistant | `sgos-anansi` | [anansi.sgl.as](https://anansi.sgl.as) | Planned |
+| **Ikhaya** | Internal knowledge base | `sgos-ikhaya` | [ikhaya.sgl.as](https://ikhaya.sgl.as) | Planned |
+| **Directory** | User directory for all apps | `sgos-directory` | [directory.sgl.as](https://directory.sgl.as) | Planned |
+| **Message Bus** | Event bus for async communication | `sgos-bus` | [bus.sgl.as](https://bus.sgl.as) | Planned |
+
+See [Apps Overview](./apps/overview) for detailed descriptions and API documentation.
+
+---
+
+## Infrastructure
+
+### Servers
 
 Two Netcup VPS servers in Nuremberg, connected via Tailscale mesh network, with external access through Cloudflare Tunnel.
 
 | Server | Role | Tailscale IP | Purpose |
 |--------|------|--------------|---------|
-| Toucan | Control plane | 100.86.22.9 | Orchestration, monitoring, shared services |
-| Hornbill | App server | 100.67.57.25 | SGOS business applications |
+| **Hornbill** | App Server | 100.67.57.25 | Runs all SGOS business applications |
+| **Toucan** | Control Plane | 100.102.199.98 | Orchestration, monitoring, backups, deployments |
 
-See [Architecture Overview](./architecture/overview) for server specs and network topology.
+### Shared Services
 
-### 2. Platform Services
+Services that support the SGOS platform.
 
-Internal services that keep the infrastructure running. Not directly user-facing.
+| Service | URL | Purpose |
+|---------|-----|---------|
+| SGOS Status | [sgos-status.sgl.as](https://sgos-status.sgl.as) | Real-time app health dashboard |
+| Grafana | [grafana.sgl.as](https://grafana.sgl.as) | Log aggregation (Loki) |
+| GlitchTip | [glitchtip.sgl.as](https://glitchtip.sgl.as) | Error tracking |
+| PocketID | [id.sgl.as](https://id.sgl.as) | Identity provider (OIDC) |
 
-| Service | Server | Description |
-|---------|--------|-------------|
-| Webhook | Toucan | GitHub webhook receiver for auto-deployments |
-| Watchtower | Both | Automatic container updates |
-| Cloudflare Tunnel | Both | Secure external access (cloudflared) |
-| Beszel Agent | Hornbill | Metrics collection agent |
-| Dozzle Agent | Hornbill | Log collection agent |
+### Tech Stack
 
-### 3. Shared Services
-
-Services used across all SGOS apps for monitoring, identity, and operations.
-
-| Service | URL | Server | Description |
-|---------|-----|--------|-------------|
-| Dashboard | [dashboard.sgl.as](https://dashboard.sgl.as) | Toucan | Homepage with links to all services |
-| Beszel | [beszel.sgl.as](https://beszel.sgl.as) | Toucan | Server monitoring |
-| Dozzle | [dozzle.sgl.as](https://dozzle.sgl.as) | Toucan | Docker logs viewer |
-| GlitchTip | [glitchtip.sgl.as](https://glitchtip.sgl.as) | Toucan | Error tracking |
-| PocketID | [id.sgl.as](https://id.sgl.as) | Toucan | OIDC identity provider |
-| SGOS Docs | [sgos-infra.sgl.as](https://sgos-infra.sgl.as) | Toucan | This documentation |
-
-### 4. SGOS Applications
-
-Business applications built on the SGOS platform.
-
-| App | URL | Server | Status | Description |
-|-----|-----|--------|--------|-------------|
-| Phone | [phone.sgl.as](https://phone.sgl.as) | Hornbill | ✅ Live | Voicemail processing & notifications |
-
-**Planned:**
-
-| App | Server | Status | Description |
-|-----|--------|--------|-------------|
-| Docflow | TBD | 🚧 Development | Document management system |
+| Component | Technology |
+|-----------|------------|
+| **Servers** | Netcup VPS (Ubuntu 24.04) |
+| **Networking** | Tailscale mesh + Cloudflare Tunnel |
+| **Deployments** | Docker Compose (source-based, via GitHub webhooks) |
+| **App Config** | app.json (Heroku-compatible with SGOS extensions) |
+| **Secrets** | SOPS + age encryption |
+| **Backups** | Restic to Cloudflare R2 |
+| **Monitoring** | Grafana + Loki (logs), GlitchTip (errors) |
+| **Identity** | Cloudflare Zero Trust + PocketID |
 
 ---
 
-## Tech Stack
+## Documentation
 
-- **Servers:** Netcup VPS (Ubuntu 24.04)
-- **Networking:** Tailscale, Cloudflare Tunnel
-- **Deployments:** Docker Compose (source-based)
-- **App Config:** app.json (Heroku-compatible with SGOS extensions)
-- **Monitoring:** Beszel (server metrics) + Dozzle (Docker logs)
-- **Error Tracking:** GlitchTip
-- **Identity:** PocketID (OIDC provider)
-- **Secrets:** SOPS + age encryption
-- **Backups:** Toucan (local) → Cloudflare R2 (offsite) via Restic
+### Apps
+
+- [Apps Overview](./apps/overview) — Detailed app descriptions and connections
+- [App Schema](./apps/app-schema) — Standard app.json configuration
+- [API Strategy](./apps/api-strategy) — API versioning and contracts
+
+### Infrastructure
+
+- [Architecture](./infrastructure/architecture) — Server specs, network topology
+- [Deployment](./infrastructure/deployment) — How to deploy and update apps
+- [Backups](./infrastructure/backups) — Backup strategy and restore procedures
+- [Secrets](./infrastructure/secrets) — Encrypting secrets with SOPS
+- [Cloudflare](./infrastructure/cloudflare) — Tunnel, DNS, and Access configuration
+- [Monitoring](./infrastructure/monitoring) — Grafana, Loki, GlitchTip, Status page
+- [Disaster Recovery](./infrastructure/disaster-recovery) — Recovery procedures
+- [Authentication](./infrastructure/authentication) — Zero Trust and OIDC flows
+
+---
+
+## Quick Reference
+
+### System Naming Convention
+
+All SGOS applications follow a consistent naming pattern:
+
+| Component | Format | Example |
+|-----------|--------|---------|
+| Repository | `sgos-<name>` | `sgos-phone` |
+| Container | `sgos-<name>-app` | `sgos-phone-app` |
+| Directory | `/srv/apps/sgos-<name>/` | `/srv/apps/sgos-phone/` |
+| Domain | `<name>.sgl.as` | `phone.sgl.as` |
+
+### Access
+
+All services are behind Cloudflare Zero Trust. Authentication options:
+- Google Workspace login
+- PocketID (passkeys/WebAuthn)
+- Service tokens (for API access)
