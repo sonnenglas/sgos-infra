@@ -92,6 +92,20 @@ But every ERP comes with the same fundamental assumption: that configuration is 
 
 We don't believe that anymore.
 
+## But Won't ERPs Adopt AI Too?
+
+Of course they will. Every ERP vendor is racing to add AI features. They'll have copilots and assistants and intelligent automation. They already have APIs.
+
+But here's the problem: AI for them is a feature to bolt on, not a foundation to build from. They'll deploy it as another layer—AI on top of configuration on top of abstraction on top of your data. The fundamental architecture doesn't change. The configuration layer doesn't disappear. The translation tax remains.
+
+This matters because AI works best when it can act directly. When there's no abstraction between intent and execution. When the system is designed from the ground up to be read and written by machines, not retrofitted with machine interfaces after the fact.
+
+ERPs will evolve, but they'll evolve at their pace, not ours. They'll add AI capabilities when their roadmap allows, charge what the market will bear, and lock the most powerful features behind enterprise tiers. We'll be waiting for them to catch up while the technology sprints ahead.
+
+We have a different option. We can build something native—where AI isn't a feature but the assumption. Where every API is designed for both humans and machines from day one. Where we move as fast as the technology allows, not as fast as a vendor permits.
+
+This won't be the right choice for everyone. Most companies should buy an ERP and wait for AI features to arrive. But we have the capability to do something different, and in a world where AI is reshaping what software can do, that's an opportunity worth taking.
+
 ## We've Been Here Before
 
 This might sound like naivety—a small company thinking it can build what the industry has spent decades refining. We understand that skepticism because we've lived the cautionary tale ourselves.
