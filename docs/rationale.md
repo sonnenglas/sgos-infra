@@ -96,17 +96,21 @@ We don't believe that anymore.
 
 This might sound like naivety—a small company thinking it can build what the industry has spent decades refining. We understand that skepticism because we've lived the cautionary tale ourselves.
 
-Sonnenglas ran on custom software for years. It didn't work out. The systems became brittle. Changes took too long. Knowledge left with the people who built things. By 2023, we were actively planning to adopt a traditional ERP. We'd made our peace with the abstraction tax.
+Sonnenglas ran on custom software for years. It didn't work out. The systems became brittle. Changes took too long. Knowledge left with the people who built things. By 2024, we were actively planning to adopt a traditional ERP. We'd made our peace with the abstraction tax.
 
 Then the ground shifted.
 
 Large language models went from curiosity to capability. Suddenly, software that would have taken months could be built in days. Code that required specialists could be written, reviewed, and modified with a fundamentally different economics. The calculus that had pushed us toward ERPs—custom software is expensive, risky, and hard to maintain—stopped being true.
 
-Two years ago, we would never have built SGOS. A small company couldn't afford that kind of investment. But the developments in software through AI have changed what's possible. Building isn't the constraint it used to be. Maintaining isn't the burden it used to be. The question isn't whether you can afford to build—it's whether you can afford not to.
+A year ago, we would never have built SGOS. A small company couldn't afford that kind of investment. But the developments in software through AI have changed what's possible. Building isn't the constraint it used to be. Maintaining isn't the burden it used to be. The question isn't whether you can afford to build—it's whether you can afford not to.
 
 ## Looking Forward
 
 The gap between what modern software can do and what traditional ERPs offer is growing every year. The abstraction tax gets heavier as expectations rise. The companies that thrive in the next decade won't be the ones with the most sophisticated configurations—they'll be the ones whose systems are genuinely programmable, genuinely automatable, genuinely theirs.
+
+We know this sounds audacious. We're probably early to recognize it. But here's the thing worth remembering: the AI models enabling this work today are the worst models we will ever work with. Every year, they get better. Every year, building becomes easier. Every year, the gap between what's possible and what traditional systems offer grows wider.
+
+Yes, it takes effort to build this foundation. But once we have it—APIs we control, data we own, contracts designed for machines—that foundation only gets stronger. The same improvements in AI that make building possible today will make operating better tomorrow. We won't just keep up with the future. We'll accelerate into it.
 
 SGOS is a bet that the best operating system for a company isn't a product you configure. It's software you own, APIs you control, and contracts that work for humans and machines alike.
 
