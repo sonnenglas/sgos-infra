@@ -74,6 +74,7 @@ Services that support the SGOS platform.
 | Grafana | [grafana.sgl.as](https://grafana.sgl.as) | Log aggregation (Loki) | 🟢 Live |
 | GlitchTip | [glitchtip.sgl.as](https://glitchtip.sgl.as) | Error tracking | 🟢 Live |
 | PocketID | [id.sgl.as](https://id.sgl.as) | Identity provider (OIDC) | 🟢 Live |
+| Sangoma | [sangoma.sgl.as](https://sangoma.sgl.as) | Automated error analysis & fix proposals | 🔵 Concept |
 | Message Bus | — | Event bus for async communication | 🔵 Concept |
 
 ### Tech Stack

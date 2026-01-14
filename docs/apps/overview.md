@@ -413,6 +413,50 @@ Self-hosted identity provider using Pocket ID. Provides authentication for users
 
 ---
 
+### Sangoma (Error Analysis)
+
+| Property | Value |
+|----------|-------|
+| **System** | `sgos-sangoma` |
+| **Domain** | [sangoma.sgl.as](https://sangoma.sgl.as) |
+| **Status** | Concept |
+
+Automated error analysis and fix proposal system. Monitors GlitchTip for errors, analyzes them with Claude, and proposes fixes as GitHub pull requests or issues.
+
+**Core principle:** Never auto-apply fixes. Maximum action is opening a PR.
+
+**How it works:**
+1. Scheduled or manual trigger starts an analysis run
+2. Fetches unresolved errors from GlitchTip
+3. Clones affected repos and passes error + code to Claude
+4. Claude analyzes and proposes fixes with confidence levels
+5. High confidence → Create PR; Low confidence → Create issue
+6. Notifies via Google Chat
+
+**Features:**
+- GlitchTip integration (Sentry-compatible API)
+- Claude Code integration (server-side auth)
+- GitHub PR/issue creation
+- Deduplication (tracks analyzed errors)
+- Context memory (rolling summary per app)
+- Web UI for run history and findings
+
+| | |
+|---|---|
+| **Input** | GlitchTip API (errors), GitHub (source code) |
+| **Output** | GitHub PRs/issues, Google Chat notifications |
+| **Connections** | GlitchTip, GitHub, Claude, Google Chat |
+
+**APIs:**
+
+| Type | URL | Available |
+|------|-----|-----------|
+| Private | `/api/...` | Yes |
+| Internal | `/api/int/v1/...` | Yes |
+| Public | — | No |
+
+---
+
 ## External Systems
 
 These systems are not part of the SGOS namespace (not internally developed or hosted externally). External systems use the `sonnenglas.net` domain.

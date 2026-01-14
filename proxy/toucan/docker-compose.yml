@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:4200:4200"
+      - "127.0.0.1:4201:4201"
       # Add more ports as apps are added
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
