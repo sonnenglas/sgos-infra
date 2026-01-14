@@ -62,6 +62,7 @@ Every webhook request is validated:
 |---------|------------|--------|--------|
 | `deploy-sgos-infra` | sonnenglas/sgos-infra | Toucan | `deploy-sgos-infra.sh` |
 | `deploy-sgos-phone` | sonnenglas/sgos-phone | Hornbill | `deploy-sgos-phone.sh` |
+| `deploy-sgos-sangoma` | sonnenglas/sgos-sangoma | Toucan | `deploy-sgos-sangoma.sh` |
 
 ---
 
