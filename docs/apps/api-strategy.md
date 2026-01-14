@@ -1,7 +1,7 @@
 ---
 title: API Strategy
 sidebar_position: 3
-description: API versioning and contracts
+description: API versioning, contracts, and documentation conventions
 ---
 
 # API Strategy
@@ -10,19 +10,92 @@ All SGOS modules communicate through versioned APIs.
 
 ## API Types
 
-| Type | URL Pattern | Stability |
-|------|-------------|-----------|
-| Private | `/api/...` | Unstable (own frontend only) |
-| Internal | `/api/int/v1/...` | Stable, versioned (other SGOS apps) |
-| Public | `/api/pub/v1/...` | Stable, versioned (external consumers) |
+Each API type serves a different audience:
 
-## Documentation URLs
+| Type | Audience | Stability | Example Consumer |
+|------|----------|-----------|------------------|
+| **Private** | Own frontend | Unstable, can change anytime | phone.sgl.as web UI |
+| **Internal** | Other SGOS apps | Stable, versioned | Accounting calling Inventory |
+| **Public** | External consumers | Stable, versioned | Partners, third-party tools |
 
-Every app exposes docs at predictable URLs:
+### Why Three Separate APIs?
 
-- `/api/docs` — Private API (Swagger UI)
-- `/api/int/v1/docs` — Internal API
-- `/api/int/v1/openapi.json` — Internal API spec
+A public consumer shouldn't see internal endpoints they can't use. Separate APIs = clear boundaries. Each type has its own documentation so consumers only see what's relevant to them.
+
+## Documentation URL Convention
+
+Each API type has its own folder containing both human-readable docs and machine-readable specs:
+
+```
+/api/                        ← Private API (unstable)
+├── docs                     ← Swagger UI for humans
+├── openapi.json             ← OpenAPI spec for machines
+└── ...endpoints
+
+/api/int/v1/                 ← Internal API v1 (stable)
+├── docs
+├── openapi.json
+└── ...endpoints
+
+/api/pub/v1/                 ← Public API v1 (stable)
+├── docs
+├── openapi.json
+└── ...endpoints
+```
+
+### URL Reference
+
+| API Type | Base Path | Swagger UI | OpenAPI Spec |
+|----------|-----------|------------|--------------|
+| Private | `/api/` | `/api/docs` | `/api/openapi.json` |
+| Internal v1 | `/api/int/v1/` | `/api/int/v1/docs` | `/api/int/v1/openapi.json` |
+| Internal v2 | `/api/int/v2/` | `/api/int/v2/docs` | `/api/int/v2/openapi.json` |
+| Public v1 | `/api/pub/v1/` | `/api/pub/v1/docs` | `/api/pub/v1/openapi.json` |
+
+### Rules
+
+1. **Docs and spec together** — If you have `/api/int/v1/docs`, you must have `/api/int/v1/openapi.json`
+2. **Versioned APIs only** — Internal and public APIs must be versioned (v1, v2, etc.)
+3. **Private is unversioned** — It's for your own frontend, version doesn't matter
+4. **Not all apps need all types** — An app may only have private API, or only internal
+
+### FastAPI Implementation
+
+Use FastAPI sub-applications to mount each API type at its correct path:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI(docs_url=None, openapi_url=None)  # Disable root docs
+
+# Private API (for own frontend)
+private = FastAPI(
+    title="Phone API",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
+app.mount("/api", private)
+
+# Internal API v1 (for other SGOS apps)
+internal_v1 = FastAPI(
+    title="Phone Internal API",
+    version="1.0.0",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
+app.mount("/api/int/v1", internal_v1)
+
+# Public API v1 (for external consumers) — if needed
+public_v1 = FastAPI(
+    title="Phone Public API",
+    version="1.0.0",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
+app.mount("/api/pub/v1", public_v1)
+```
+
+Each sub-application generates its own isolated documentation at its mount point.
 
 ## OpenAPI as Contract
 

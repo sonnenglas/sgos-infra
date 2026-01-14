@@ -310,6 +310,48 @@ A user directory exposed as a simple API so all apps know: Who is who. Central m
 
 ---
 
+### Clock (Time Tracking)
+
+| Property | Value |
+|----------|-------|
+| **System** | `sgos-clock` |
+| **Domain** | [clock.sgl.as](https://clock.sgl.as) |
+| **Status** | Concept |
+
+Internal time tracking and attendance system for Sonnenglas employees. Tracks working time, leave, and attendance for compliance, transparency, and payroll.
+
+**Core principle:** Explicitly separate what was planned from what actually happened.
+
+For each user and each scheduled workday, the system generates a **Scheduled_Work** entry in advance. This entry represents both what *should* happen (plan) and what *did* happen (actual). This avoids deriving payroll and compliance data from raw clock events and enables simple queries, deterministic exports, and clean audit trails.
+
+**Features:**
+- Clock-in / clock-out
+- Leave & vacation scheduling
+- Work location enforcement (GPS / IP)
+- Holiday awareness (via Nagar IT API)
+- Role-based work schedules (RRULE-based)
+- Dashboard (compliance & overview)
+- Payroll exports (CSV / PDF)
+- Notifications (email)
+- Mobile-friendly UI
+- Optional NFC / terminal-based clock-in
+
+| | |
+|---|---|
+| **Input** | UI, API |
+| **Output** | UI, API |
+| **Connections** | Directory (users, roles, companies), Nagar IT API (public holidays) |
+
+**APIs:**
+
+| Type | URL | Available |
+|------|-----|-----------|
+| Private | `/api/...` | Yes |
+| Internal | `/api/int/v1/...` | Yes |
+| Public | — | No |
+
+---
+
 ## Infrastructure Systems
 
 ### Message Bus
