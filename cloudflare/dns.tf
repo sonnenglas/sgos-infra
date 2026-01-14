@@ -85,6 +85,15 @@ resource "cloudflare_record" "webhook" {
   proxied = true
 }
 
+# Sangoma - Error Analysis (needs Zero Trust - internal tool)
+resource "cloudflare_record" "sangoma" {
+  zone_id = var.cloudflare_zone_id
+  name    = "sangoma"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.toucan.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 # =============================================================================
 # Hornbill Tunnel Services
 # =============================================================================
