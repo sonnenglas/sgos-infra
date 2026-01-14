@@ -56,7 +56,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "toucan" {
     # Sangoma (error analysis)
     ingress_rule {
       hostname = "sangoma.sgl.as"
-      service  = "http://localhost:4201"
+      service  = "http://localhost:8010"
     }
     # Deployment webhook (public - no Zero Trust)
     ingress_rule {
