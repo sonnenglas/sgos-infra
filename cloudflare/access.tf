@@ -131,3 +131,29 @@ resource "cloudflare_zero_trust_access_policy" "sgos_status_google" {
     email_domain = ["sonnenglas.net"]
   }
 }
+
+# =============================================================================
+# Docflow Webhooks (bypass for services that can't send auth headers)
+# Note: Main docflow Access app is managed manually in Cloudflare dashboard
+# =============================================================================
+
+# Dropscan webhook - bypasses Zero Trust (token auth at app level)
+resource "cloudflare_zero_trust_access_application" "docflow_dropscan" {
+  zone_id          = var.cloudflare_zone_id
+  name             = "Docflow Dropscan Webhook"
+  domain           = "docflow.sgl.as/api/webhook/dropscan*"
+  type             = "self_hosted"
+  session_duration = "24h"
+}
+
+resource "cloudflare_zero_trust_access_policy" "docflow_dropscan_bypass" {
+  zone_id        = var.cloudflare_zone_id
+  application_id = cloudflare_zero_trust_access_application.docflow_dropscan.id
+  name           = "Bypass - Dropscan cannot send headers"
+  precedence     = 1
+  decision       = "bypass"
+
+  include {
+    everyone = true
+  }
+}
