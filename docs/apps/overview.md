@@ -122,13 +122,49 @@ Accounting system as a single source of truth for all business matters that are 
 | **Domain** | [inventory.sgl.as](https://inventory.sgl.as) |
 | **Status** | Planned |
 
-Single source of truth for all physical stock movements. Centralized product management (what exists, its attributes).
+Single source of truth for all physical stock movements and quantities. Tracks what's where, reservations, and stock history. References products from Baobab.
 
 | | |
 |---|---|
 | **Input** | UI (stock movements), API |
 | **Output** | UI, API |
-| **Connections** | Xhosa, Accounting |
+| **Connections** | Baobab, Xhosa, Accounting |
+
+**APIs:**
+
+| Type | URL | Available |
+|------|-----|-----------|
+| Private | `/api/...` | Yes |
+| Internal | `/api/int/v1/...` | Yes |
+| Public | — | No |
+
+---
+
+### Baobab (Product Master)
+
+| Property | Value |
+|----------|-------|
+| **System** | `sgos-baobab` |
+| **Domain** | [baobab.sgl.as](https://baobab.sgl.as) |
+| **Status** | Concept |
+
+Product Information Management (PIM) system. Single source of truth for all products (finished goods and raw materials), brands, and marketplace listings.
+
+**Core principle:** Products exist independently of inventory. Baobab defines *what* things are; Inventory tracks *how many* and *where*.
+
+**Features:**
+- Product master data (SKUs, names, types, attributes, variants)
+- Brand management (logos, guidelines, assets)
+- Marketplace listings (external IDs, platform mappings)
+- Content management (descriptions, translations, images)
+- Categories and tags
+- Bill of materials references (for MRP)
+
+| | |
+|---|---|
+| **Input** | UI, API |
+| **Output** | UI, API |
+| **Connections** | Inventory, Xhosa, MRP, Ufudu, Website |
 
 **APIs:**
 
@@ -148,10 +184,10 @@ Single source of truth for all physical stock movements. Centralized product man
 | **Domain** | [mrp.sgl.as](https://mrp.sgl.as) |
 | **Status** | Planned |
 
-Manufacturing and production with flat-file architecture and lightweight database. Strongly connected with Inventory.
+Manufacturing and production with flat-file architecture and lightweight database. Strongly connected with Inventory and Baobab.
 
 Features:
-- Finished products and subassemblies defined as dependency files (YAML/JSON)
+- Bill of materials from Baobab (product structure, dependencies)
 - Work orders managed in lightweight DB
 - Pushes actual production to Inventory
 - Planning and organisational UI: "What do we need to manufacture and when?"
@@ -162,7 +198,7 @@ Features:
 |---|---|
 | **Input** | UI (stock movements), API |
 | **Output** | UI, API |
-| **Connections** | Xhosa, Accounting, Human in the Soup |
+| **Connections** | Baobab, Inventory, Xhosa, Accounting, Human in the Soup |
 
 **APIs:**
 

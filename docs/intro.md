@@ -41,7 +41,8 @@ All business applications built on the SGOS platform.
 | **Docflow** | Document management (invoices, contracts) · `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | 🟡 Beta |
 | **Ufudu** | Warehouse fulfillment (pick/pack) · `sgos-ufudu` | [ufudu.sgl.as](https://ufudu.sgl.as) | 🟡 Beta |
 | **Accounting** | Financial transactions, VAT, exports · `sgos-accounting` | [accounting.sgl.as](https://accounting.sgl.as) | 🟠 Alpha |
-| **Inventory** | Stock management, product catalog · `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | 🟠 Alpha |
+| **Inventory** | Stock management & quantities · `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | 🟠 Alpha |
+| **Baobab** | Product master, brands, listings · `sgos-baobab` | [baobab.sgl.as](https://baobab.sgl.as) | 🔵 Concept |
 | **Directory** | User directory for all apps · `sgos-directory` | [directory.sgl.as](https://directory.sgl.as) | 🟠 Alpha |
 | **Xhosa** | Order management, CRM, invoicing · `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | 🔵 Concept |
 | **Soup** | Central to-do lists, task management · `sgos-soup` | [soup.sgl.as](https://soup.sgl.as) | 🔵 Concept |
