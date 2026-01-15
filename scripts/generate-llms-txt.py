@@ -144,6 +144,23 @@ def save_cache(cache: dict):
     CACHE_FILE.write_text(json.dumps(cache, indent=2))
 
 
+def get_sort_key(md_file: Path, frontmatter: dict) -> tuple:
+    """Generate sort key based on directory and sidebar_position."""
+    # Get directory depth and name for grouping
+    relative = md_file.relative_to(DOCS_DIR)
+    parts = list(relative.parts[:-1])  # Directory parts
+
+    # Sidebar position (default to 999 if not set)
+    position = frontmatter.get("sidebar_position", 999)
+
+    # intro.md should come first
+    if md_file.name == "intro.md":
+        return (0, 0, "")
+
+    # Sort by: directory path, then sidebar_position, then filename
+    return (1, len(parts), "/".join(parts), position, md_file.name)
+
+
 def main():
     print("Generating llms.txt...")
 
@@ -151,17 +168,24 @@ def main():
     entries = []
     stats = {"cached": 0, "generated": 0, "skipped": 0}
 
-    # Find all markdown files
-    md_files = sorted(DOCS_DIR.rglob("*.md")) + sorted(DOCS_DIR.rglob("*.mdx"))
+    # Find all markdown files and pre-parse for sorting
+    md_files = list(DOCS_DIR.rglob("*.md")) + list(DOCS_DIR.rglob("*.mdx"))
 
+    # Parse frontmatter for sorting
+    files_with_frontmatter = []
     for md_file in md_files:
-        # Skip category files and partials
         if md_file.name.startswith("_"):
             continue
-
-        relative_path = str(md_file)
         content = md_file.read_text()
-        frontmatter, body = parse_frontmatter(content)
+        frontmatter, _ = parse_frontmatter(content)
+        files_with_frontmatter.append((md_file, frontmatter, content))
+
+    # Sort by sidebar position
+    files_with_frontmatter.sort(key=lambda x: get_sort_key(x[0], x[1]))
+
+    for md_file, frontmatter, content in files_with_frontmatter:
+        relative_path = str(md_file)
+        _, body = parse_frontmatter(content)
 
         # Skip human-only content
         if frontmatter.get("human_only"):
