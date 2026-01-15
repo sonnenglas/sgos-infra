@@ -4,6 +4,7 @@ sidebar_position: 2
 description: The rationale behind building our own operating system instead of using traditional ERP software.
 keywords: [rationale, philosophy, erp, vision]
 custom_edit_url: null
+human_only: true
 ---
 
 :::note For Humans Only

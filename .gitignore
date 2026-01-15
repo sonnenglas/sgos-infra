@@ -29,3 +29,4 @@ npm-debug.log*
 *.tfvars
 !*.tfvars.example
 cloudflare/tfplan
+.llms-cache.json
