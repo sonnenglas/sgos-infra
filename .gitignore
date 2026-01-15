@@ -28,3 +28,4 @@ npm-debug.log*
 .terraform/
 *.tfvars
 !*.tfvars.example
+cloudflare/tfplan
