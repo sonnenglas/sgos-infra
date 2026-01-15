@@ -6,7 +6,7 @@ description: Structured JSON logging for SGOS applications
 
 # Logging Standard
 
-All SGOS applications use structured JSON logging to stdout. Logs are automatically collected by Alloy, stored in Loki, and queryable via Grafana.
+All SGOS applications log to stdout. Logs are automatically collected by Alloy, stored in Loki (30 days), and queryable via Grafana.
 
 ## Flow
 
@@ -15,6 +15,28 @@ App (stdout) → Docker → Alloy → Loki → Grafana
 ```
 
 Apps just log to stdout. Infrastructure handles the rest.
+
+## Minimum Setup
+
+**None.** Any output to stdout/stderr is automatically collected.
+
+```python
+print("Hello")  # Works
+logger.info("Hello")  # Works
+```
+
+Query in Grafana: `{container="sgos-myapp-app"}`
+
+## Recommended Setup
+
+Use structured JSON for queryable fields:
+
+```python
+logger.info("Order created", extra={"order_id": 123, "user_id": "stefan@sonnenglas.net"})
+# Output: {"ts":"...","level":"info","msg":"Order created","order_id":123,"user_id":"stefan@sonnenglas.net"}
+```
+
+Query in Grafana: `{container="sgos-xhosa-app"} | json | order_id=123`
 
 ## Log Format
 
@@ -36,10 +58,13 @@ All logs must be single-line JSON objects:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `app` | string | Application name (`sgos-xhosa`) |
 | `request_id` | string | Unique request ID for tracing |
 | `user_id` | string | Email of authenticated user |
 | `duration_ms` | number | Request/operation duration |
+
+:::note App identification is automatic
+You don't need an `app` field. Alloy labels all logs with `container="sgos-<app>-app"` automatically. Query with `{container="sgos-xhosa-app"}`.
+:::
 
 ### Optional Fields
 
@@ -72,23 +97,18 @@ from datetime import datetime, timezone
 class JSONFormatter(logging.Formatter):
     """Format logs as single-line JSON."""
 
-    def __init__(self, app_name: str):
-        super().__init__()
-        self.app_name = app_name
-
     def format(self, record: logging.LogRecord) -> str:
         log = {
             "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
             "level": record.levelname.lower(),
             "msg": record.getMessage(),
-            "app": self.app_name,
         }
 
         # Add exception info
         if record.exc_info:
             log["error"] = self.formatException(record.exc_info)
 
-        # Add extra fields (request_id, user_id, etc.)
+        # Add extra fields (request_id, user_id, order_id, etc.)
         for key, value in record.__dict__.items():
             if key not in ("name", "msg", "args", "created", "filename",
                           "funcName", "levelname", "levelno", "lineno",
@@ -101,10 +121,10 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log)
 
 
-def setup_logging(app_name: str, level: str = "INFO"):
+def setup_logging(level: str = "INFO"):
     """Configure JSON logging to stdout."""
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JSONFormatter(app_name))
+    handler.setFormatter(JSONFormatter())
 
     # Configure root logger
     root = logging.getLogger()
@@ -125,7 +145,7 @@ from app.logging import setup_logging
 import logging
 import uuid
 
-setup_logging("sgos-xhosa")
+setup_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -154,9 +174,9 @@ async def get_order(order_id: int):
 ### Output
 
 ```json
-{"ts":"2026-01-15T12:34:56.789Z","level":"info","msg":"Request started","app":"sgos-xhosa","request_id":"a1b2c3d4","path":"/orders/123"}
-{"ts":"2026-01-15T12:34:56.812Z","level":"info","msg":"Fetching order","app":"sgos-xhosa","order_id":123}
-{"ts":"2026-01-15T12:34:56.845Z","level":"info","msg":"Request completed","app":"sgos-xhosa","request_id":"a1b2c3d4","status":200}
+{"ts":"2026-01-15T12:34:56.789Z","level":"info","msg":"Request started","request_id":"a1b2c3d4","path":"/orders/123"}
+{"ts":"2026-01-15T12:34:56.812Z","level":"info","msg":"Fetching order","order_id":123}
+{"ts":"2026-01-15T12:34:56.845Z","level":"info","msg":"Request completed","request_id":"a1b2c3d4","status":200}
 ```
 
 ## Querying in Grafana
@@ -176,8 +196,8 @@ JSON logs enable powerful filtering in Loki:
 # Find by order ID across all apps
 {server="hornbill"} | json | order_id=12345
 
-# Error rate by app
-sum(rate({server="hornbill"} | json | level="error" [5m])) by (app)
+# Error rate by container
+sum(rate({server="hornbill"} | json | level="error" [5m])) by (container)
 ```
 
 ## Error Tracking
