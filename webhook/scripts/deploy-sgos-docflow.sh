@@ -51,7 +51,7 @@ echo "=== Rebuilding app ==="
 docker compose up -d --build app db worker
 
 echo "=== Waiting for Docker health status ==="
-CONTAINER="sgos-docflow"
+CONTAINER="sgos-docflow-app"
 TIMEOUT=120
 ELAPSED=0
 
