@@ -13,7 +13,7 @@ set -e
 REPO="$1"
 REF="$2"
 INFRA_DIR="/srv/services/sgos-infra"
-COMPOSE_FILE="$INFRA_DIR/site/docker-compose.prod.yml"
+COMPOSE_FILE="$INFRA_DIR/docusaurus/docker-compose.prod.yml"
 PROXY_FLAG="/srv/proxy/toucan/flags/docs.flag"
 BACKUPS_DIR="/srv/services/backups"
 

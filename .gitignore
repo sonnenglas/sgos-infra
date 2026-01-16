@@ -1,7 +1,7 @@
-# Docusaurus (in site/)
-site/node_modules/
-site/build/
-site/.docusaurus/
+# Docusaurus
+docusaurus/node_modules/
+docusaurus/build/
+docusaurus/.docusaurus/
 .pnp
 .pnp.js
 
