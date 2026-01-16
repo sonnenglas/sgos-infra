@@ -8,9 +8,15 @@
 # Each app must have a backup.sh script that creates backups in its backups/ directory.
 # This orchestrator:
 #   1. SSHs to each server and runs the app's backup.sh
-#   2. Rsyncs the backup files to Toucan staging
-#   3. Uses restic to sync everything to Cloudflare R2
-#   4. Prunes old snapshots (keeps 7 daily, 4 weekly, 3 monthly)
+#   2. Rsyncs the backup files to Toucan staging (organized by date)
+#   3. Cleans up staging backups older than 7 days
+#   4. Uses restic to sync everything to Cloudflare R2
+#   5. Prunes old R2 snapshots (keeps 7 daily, 4 weekly, 3 monthly)
+#
+# Retention:
+#   - Hornbill (source):  7 days local
+#   - Toucan (staging):   7 days (date-organized: staging/<app>/YYYY-MM-DD/)
+#   - Cloudflare R2:      7 daily, 4 weekly, 3 monthly via restic
 
 set -e
 
@@ -24,6 +30,8 @@ STATUS_FILE="/srv/backups/status.json"
 STAGING_DIR="/srv/backups/staging"
 SSH_KEY="/home/stefan/.ssh/deploy_hornbill"
 HORNBILL="stefan@100.67.57.25"
+RETENTION_DAYS=7
+TODAY=$(date +%Y-%m-%d)
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -38,11 +46,28 @@ update_status() {
         "$STATUS_FILE" > "$STATUS_FILE.tmp" && mv "$STATUS_FILE.tmp" "$STATUS_FILE"
 }
 
+cleanup_old_backups() {
+    local app="$1"
+    local app_staging="$STAGING_DIR/$app"
+
+    log "Cleaning up old backups for $app (keeping $RETENTION_DAYS days)..."
+
+    # Find and remove directories older than RETENTION_DAYS
+    if [ -d "$app_staging" ]; then
+        find "$app_staging" -maxdepth 1 -type d -name "20*" -mtime +$RETENTION_DAYS -exec rm -rf {} \; 2>/dev/null || true
+
+        # Count remaining backups
+        local count=$(find "$app_staging" -maxdepth 1 -type d -name "20*" | wc -l)
+        log "$app: $count backup(s) retained in staging"
+    fi
+}
+
 backup_app() {
     local app="$1"
     local server="$2"
     local ssh_target="$3"
     local backup_path="/srv/apps/$app/backups"
+    local today_staging="$STAGING_DIR/$app/$TODAY"
 
     log "Backing up $app from $server..."
     update_status "$app" "running" "Executing backup script"
@@ -50,9 +75,13 @@ backup_app() {
     if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$ssh_target" "/srv/apps/$app/src/backup.sh" 2>&1 | tee -a "$LOG_FILE"; then
         log "$app backup script completed"
 
-        mkdir -p "$STAGING_DIR/$app"
-        if rsync -avz -e "ssh -i $SSH_KEY" "$ssh_target:$backup_path/" "$STAGING_DIR/$app/" 2>&1 | tee -a "$LOG_FILE"; then
-            update_status "$app" "collected" "Files synced to staging"
+        # Create date-organized directory for today's backup
+        mkdir -p "$today_staging"
+        if rsync -avz -e "ssh -i $SSH_KEY" "$ssh_target:$backup_path/" "$today_staging/" 2>&1 | tee -a "$LOG_FILE"; then
+            update_status "$app" "collected" "Files synced to staging ($TODAY)"
+
+            # Clean up old backups
+            cleanup_old_backups "$app"
             return 0
         else
             update_status "$app" "error" "rsync failed"

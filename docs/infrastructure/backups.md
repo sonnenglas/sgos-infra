@@ -18,13 +18,13 @@ Hornbill:
        ▼
 
 Toucan:
-  /srv/backups/staging/          ← Collected from all servers
-  /srv/backups/status.json       ← Backup status
+  /srv/backups/staging/<app>/<date>/  ← Collected from all servers (7 days)
+  /srv/backups/status.json            ← Backup status
 
        │ (restic to R2)
        ▼
 
-Cloudflare R2 (sonnenglas-backups) ← Offsite storage
+Cloudflare R2 (sonnenglas-backups) ← Offsite storage (7d/4w/3m)
 ```
 
 ## How It Works
@@ -33,15 +33,18 @@ Cloudflare R2 (sonnenglas-backups) ← Offsite storage
 2. `app.json` declares the backup output location
 3. Toucan runs a nightly cron at 3 AM (`/srv/services/backups/backup-orchestrator.sh`)
 4. Orchestrator SSHs to each server and runs the app backup scripts
-5. Orchestrator pulls backup outputs via rsync to `/srv/backups/staging/`
-6. Restic encrypts and syncs to Cloudflare R2
+5. Orchestrator pulls backup outputs via rsync to `/srv/backups/staging/<app>/<date>/`
+6. Orchestrator cleans up staging backups older than 7 days
+7. Restic encrypts and syncs to Cloudflare R2
+
+**Benefit:** For recent restores (last 7 days), you can restore directly from Toucan staging without downloading from R2.
 
 ## Retention
 
 | Location | Retention |
 |----------|-----------|
 | App server (local) | 7 days (managed by app backup.sh) |
-| Toucan staging | Latest sync only |
+| Toucan staging | 7 days (date-organized directories) |
 | R2 (offsite) | 7 daily, 4 weekly, 3 monthly |
 
 ## What Gets Backed Up
@@ -73,7 +76,7 @@ Cloudflare R2 (sonnenglas-backups) ← Offsite storage
 |------|---------|
 | `/srv/services/backups/backup-orchestrator.sh` | Deployed orchestrator |
 | `/srv/services/backups/.env` | Decrypted secrets |
-| `/srv/backups/staging/` | Collected backups before R2 sync |
+| `/srv/backups/staging/<app>/<date>/` | Collected backups, 7 days retained |
 | `/srv/backups/status.json` | Latest backup status per app |
 | `/srv/backups/backup.log` | Backup run log |
 
@@ -145,7 +148,21 @@ restic ls latest /srv/backups/staging/sgos-phone/
 
 ## Restore Examples
 
-### Example 1: Restore Phone Database
+### Quick Restore (Last 7 Days - From Staging)
+
+For recent backups, restore directly from Toucan staging (faster, no R2 download):
+
+```bash
+# On Toucan - list available dates
+ls /srv/backups/staging/sgos-phone/
+
+# Copy specific date to Hornbill
+scp /srv/backups/staging/sgos-phone/2026-01-15/database.sql stefan@hornbill:/tmp/
+
+# Then restore on Hornbill as usual
+```
+
+### Example 1: Restore Phone Database (From R2)
 
 ```bash
 # On Toucan - prepare restic
@@ -159,8 +176,11 @@ restic snapshots
 # Restore latest to temp directory
 restic restore latest --target /tmp/restore --include "sgos-phone"
 
-# Copy to Hornbill
-scp /tmp/restore/srv/backups/staging/sgos-phone/database.sql stefan@hornbill:/tmp/
+# Find the latest backup date (structure: staging/sgos-phone/YYYY-MM-DD/)
+ls /tmp/restore/srv/backups/staging/sgos-phone/
+
+# Copy to Hornbill (using latest date found)
+scp /tmp/restore/srv/backups/staging/sgos-phone/2026-01-15/database.sql stefan@hornbill:/tmp/
 
 # On Hornbill - restore database
 ssh stefan@hornbill
@@ -187,14 +207,14 @@ cd /srv/services/backups
 source .env
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
 
-# Browse to find specific files
-restic ls latest /srv/backups/staging/sgos-phone/voicemails/
+# Browse to find specific files (structure: staging/sgos-phone/YYYY-MM-DD/voicemails/)
+restic ls latest /srv/backups/staging/sgos-phone/
 
-# Restore just voicemails directory
-restic restore latest --target /tmp/restore --include "sgos-phone/voicemails"
+# Restore voicemails from specific date
+restic restore latest --target /tmp/restore --include "sgos-phone/2026-01-15/voicemails"
 
 # Copy specific files to Hornbill
-scp /tmp/restore/srv/backups/staging/sgos-phone/voicemails/*.mp3 \
+scp /tmp/restore/srv/backups/staging/sgos-phone/2026-01-15/voicemails/*.mp3 \
     stefan@hornbill:/srv/apps/sgos-phone/data/voicemails/
 ```
 
@@ -209,8 +229,11 @@ export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
 # Restore latest docflow backup
 restic restore latest --target /tmp/restore --include "sgos-docflow"
 
-# Copy to Hornbill
-scp -r /tmp/restore/srv/backups/staging/sgos-docflow/* stefan@hornbill:/tmp/docflow-restore/
+# Find available dates
+ls /tmp/restore/srv/backups/staging/sgos-docflow/
+
+# Copy specific date to Hornbill
+scp -r /tmp/restore/srv/backups/staging/sgos-docflow/2026-01-15/* stefan@hornbill:/tmp/docflow-restore/
 
 # On Hornbill - restore
 ssh stefan@hornbill
