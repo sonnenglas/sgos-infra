@@ -2,6 +2,9 @@
 docusaurus/node_modules/
 docusaurus/build/
 docusaurus/.docusaurus/
+
+# Root node_modules (shouldn't exist, but just in case)
+/node_modules/
 .pnp
 .pnp.js
 
