@@ -28,6 +28,10 @@ The innovation is in the approach: **APIs are contracts between apps**. This mea
 
 This is why we don't use an existing ERP — they weren't designed for an AI-native world.
 
+:::tip Core Principle: Agent Native Infrastructure
+Every SGOS application exposes a complete REST API. What a human can do, an LLM agent can do too — or more. This enables scalable human-LLM collaboration where agents handle routine operations while humans focus on decisions and exceptions.
+:::
+
 ---
 
 ## SGOS Applications

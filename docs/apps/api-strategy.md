@@ -8,6 +8,17 @@ description: API versioning, contracts, and documentation conventions
 
 All SGOS modules communicate through versioned APIs.
 
+## Why API-First? {#agent-native}
+
+SGOS follows **Agent Native Infrastructure**: every operation available to humans must be equally accessible to LLM agents. This means:
+
+- **No UI-only features** — Everything goes through the API first, UI is just one consumer
+- **Consistent authentication** — Service accounts for agents, OAuth for humans, same permissions model
+- **Structured responses** — JSON that agents can parse and act on without scraping
+- **OpenAPI specs** — Machine-readable contracts that agents use to generate tool definitions
+
+This is the foundation for human-LLM collaboration: agents can read orders, create invoices, update inventory, and orchestrate workflows — the same operations humans perform through the UI.
+
 ## API Types
 
 Each API type serves a different audience:

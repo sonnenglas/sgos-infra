@@ -1,14 +1,31 @@
 # SGOS Documentation - LLM Reference
-# Generated: 2026-01-15 14:50
+# Generated: 2026-01-16 10:36
 # Source: https://sgos-infra.sgl.as
-# Entries: 12
+# Entries: 14
 
 ---
 ## SGOS Documentation
 path: docs/intro.md
 url: https://sgos-infra.sgl.as
 
-SGOS (Sonnenglas Operating System): internal modular ERP, API-first, AI-native platform for Sonnenglas. Apps: Phone (sgos-phone, phone.sgl.as, Live) voicemail processing; Ikhaya (sgos-ikhaya, ikhaya.sgl.as, Live) knowledge base; Docflow (sgos-docflow, docflow.sgl.as, Beta) document management; Ufudu (sgos-ufudu, ufudu.sgl.as, Beta) warehouse fulfillment; Accounting (sgos-accounting, accounting.sgl.as, Alpha) financial transactions/VAT; Inventory (sgos-inventory, inventory.sgl.as, Alpha) stock management; Baobab (sgos-baobab, baobab.sgl.as, Concept) product master/PIM; Directory (sgos-directory, directory.sgl.as, Alpha) user directory; Xhosa (sgos-xhosa, xhosa.sgl.as, Concept) order management/CRM; Soup (sgos-soup, soup.sgl.as, Concept) task management; Anansi (sgos-anansi, anansi.sgl.as, Concept) AI assistant; Clock (sgos-clock, clock.sgl.as, Concept) time tracking; MRP (sgos-mrp, mrp.sgl.as, Planned) manufacturing planning. Servers: Hornbill (apps, 100.67.57.25), Toucan (control, 100.102.199.98), both Netcup VPS Nuremberg Ubuntu 24.04. Shared services: SGOS Status (sgos-status.sgl.as, Live) health dashboard; Grafana (grafana.sgl.as, Live) Loki logs; GlitchTip (glitchtip.sgl.as, Live) error tracking; PocketID (id.sgl.as, Live) OIDC identity; Sangoma (sangoma.sgl.as, Concept) automated error analysis; Message Bus (Concept) event bus. Stack: Tailscale mesh + Cloudflare Tunnel networking, Docker Compose source-based deploys via GitHub webhooks, app.json config (Heroku-compatible), SOPS+age secrets, Restic to Cloudflare R2 backups, Cloudflare Zero Trust + PocketID auth (Google Workspace or passkeys). Naming: repo sgos-<name>, container sgos-<name>-app, dir /srv/apps/sgos-<name>/, domain <name>.sgl.as.
+SGOS (Sonnenglas Operating System): modular API-first internal ERP, AI-native design where APIs serve UIs/LLMs/agents equally.
+
+APPS: Phone (sgos-phone, phone.sgl.as, Live): voicemail processing. Ikhaya (sgos-ikhaya, ikhaya.sgl.as, Live): internal knowledge base. Docflow (sgos-docflow, docflow.sgl.as, Beta): document management (invoices, contracts). Ufudu (sgos-ufudu, ufudu.sgl.as, Beta): warehouse fulfillment pick/pack. Accounting (sgos-accounting, accounting.sgl.as, Alpha): financial transactions, VAT, exports. Inventory (sgos-inventory, inventory.sgl.as, Alpha): stock management. Baobab (sgos-baobab, baobab.sgl.as, Concept): product master, brands, listings. Directory (sgos-directory, directory.sgl.as, Alpha): user directory. Xhosa (sgos-xhosa, xhosa.sgl.as, Concept): order management, CRM, invoicing. Soup (sgos-soup, soup.sgl.as, Concept): task management. Anansi (sgos-anansi, anansi.sgl.as, Concept): AI chatbot. Clock (sgos-clock, clock.sgl.as, Concept): time tracking. MRP (sgos-mrp, mrp.sgl.as, Planned): manufacturing planning.
+
+SERVERS: Hornbill (apps, 100.67.57.25), Toucan (control, 100.102.199.98). Both Netcup VPS Ubuntu 24.04 in Nuremberg, Tailscale mesh, Cloudflare Tunnel external access.
+
+SHARED SERVICES: SGOS Status (sgos-status.sgl.as, Live): health dashboard. Grafana (grafana.sgl.as, Live): Loki logs. GlitchTip (glitchtip.sgl.as, Live): error tracking. PocketID (id.sgl.as, Live): OIDC identity. Sangoma (sangoma.sgl.as, Concept): automated error analysis. Message Bus (Concept): async events.
+
+STACK: Docker Compose source-based deploys via GitHub webhooks, app.json config (Heroku-compatible), SOPS+age secrets, Restic backups to Cloudflare R2, Cloudflare Zero Trust + PocketID auth (Google Workspace or passkeys/WebAuthn, service tokens for API).
+
+NAMING: repo sgos-<name>, container sgos-<name>-app, path /srv/apps/sgos-<name>/, domain <name>.sgl.as.
+
+---
+## Architecture Overview
+path: docs/architecture.md
+url: https://sgos-infra.sgl.as/architecture
+
+SGOS Architecture: Servers: Hornbill (business apps), Toucan (control plane). Apps on Hornbill: Phone (Twilio telephony gateway, Live), Xhosa (order management/ERP core, Live), Docflow (document processing/archive, Live), Accounting (financial records/reporting, Planned), Inventory (stock levels/movements, Planned), Baobab (product/brand master data, Concept), MRP (manufacturing planning, Concept), Ufudu (partner portal backend, Planned), Soup (content API for website, Planned), Anansi (competitor price crawling, Concept), Ikhaya (B2B webshop, Concept), Directory (employee directory, Planned), Clock (time tracking, Concept), Bus (event message broker, Concept), Identity (SSO/authentication, Concept). Apps on Toucan: Sangoma (automated error analysis, Concept), Grafana, Loki, GlitchTip, Beszel. External systems: Twilio→Phone, Dropscan→Docflow, Google Workspace→Directory, sonnenglas.net→Soup, Partner Portal→Ufudu. Integration methods: Twilio→Phone (webhook, incoming calls), Dropscan→Docflow (webhook, scanned documents), Phone→Xhosa (internal API, order creation), Xhosa→Accounting (internal API, invoice generation), Xhosa→Inventory (internal API, stock reservation), Docflow→Accounting (internal API, payables from invoices), Bus→all apps (Redis pub/sub, event distribution), Identity→all apps (OAuth/OIDC, authentication), GlitchTip→Sangoma (API polling, error collection), Sangoma→GitHub (API, PR/issue creation). Order flow: Customer→Phone→Xhosa (creates/updates order)→Inventory (reserves stock)→Accounting (creates invoice)→Docflow (archives PDF, sends email). Document flow: Dropscan→Docflow (webhook)→classifies→if invoice: Accounting (create payable)→Xhosa (link to supplier order); if contract: archive/notify. Data flows: Hornbill→Toucan (logs, errors), Toucan→Hornbill (fixes). App groupings: Customer Touchpoints (Phone, Ikhaya, Ufudu, Soup), Core Business (Xhosa, Docflow, Accounting, Inventory), Manufacturing (MRP, Baobab), Intelligence (Anansi), Internal Tools (Directory, Clock), Platform Services (Bus, Identity, Sangoma).
 
 ---
 ## Apps Overview
@@ -35,7 +52,14 @@ app.json schema for SGOS apps, based on Heroku app.json. Core fields: name (sgos
 path: docs/apps/api-strategy.md
 url: https://sgos-infra.sgl.as/apps/api-strategy
 
-API Types: Private (own frontend, unstable, unversioned, /api/), Internal (other SGOS apps, stable versioned, /api/int/v1/), Public (external consumers, stable versioned, /api/pub/v1/). URL structure: each API type has docs at /docs and spec at /openapi.json relative to base path. Private: /api/docs, /api/openapi.json. Internal v1: /api/int/v1/docs, /api/int/v1/openapi.json. Internal v2: /api/int/v2/docs, /api/int/v2/openapi.json. Public v1: /api/pub/v1/docs, /api/pub/v1/openapi.json. Rules: docs and spec must coexist, internal/public must be versioned, private unversioned, apps may implement subset of API types. FastAPI implementation: disable root docs (docs_url=None, openapi_url=None), mount sub-applications at paths with relative docs_url="/docs" and openapi_url="/openapi.json". OpenAPI contract: Pydantic schemas define API, FastAPI generates spec, commit openapi.json to git, test against spec. Versioning: no bump for adding optional fields or new endpoints, new version (v2) required for removing fields/endpoints or changing field types, breaking changes require deprecation period.
+SGOS API Strategy: Agent Native Infrastructure - all operations accessible to both humans and LLM agents via API, no UI-only features. API Types: Private (own frontend, unstable, unversioned), Internal (other SGOS apps, stable, versioned), Public (external consumers, stable, versioned). URL Convention: Private at /api/ with /api/docs and /api/openapi.json; Internal v1 at /api/int/v1/ with /api/int/v1/docs and /api/int/v1/openapi.json; Internal v2 at /api/int/v2/; Public v1 at /api/pub/v1/ with /api/pub/v1/docs and /api/pub/v1/openapi.json. Rules: docs and openapi.json always together, internal/public must be versioned, private unversioned, apps may implement subset of API types. FastAPI implementation: main app with docs_url=None, mount sub-applications (FastAPI instances) at /api, /api/int/v1, /api/pub/v1 with each having own docs_url="/docs" and openapi_url="/openapi.json". OpenAPI as contract: Pydantic schemas define API, FastAPI generates openapi.json, commit to git, test against spec. Versioning: adding optional fields or new endpoints = no version bump; removing fields/endpoints or changing field types = new version (v2) with deprecation period.
+
+---
+## Logging Standard
+path: docs/apps/logging.md
+url: https://sgos-infra.sgl.as/apps/logging
+
+SGOS Logging Standard: Apps log to stdout, collected by Docker → Alloy → Loki (30 days retention) → Grafana. Minimum setup: none, any stdout/stderr auto-collected. Query: `{container="sgos-myapp-app"}`. Recommended: structured JSON for queryable fields. Required JSON fields: ts (ISO 8601 with Z), level (debug/info/warn/error), msg (human-readable). Recommended fields: request_id, user_id, duration_ms. App identification automatic via container label. Log levels: debug (disabled in production), info (normal ops), warn (recoverable issues), error (failures needing attention). FastAPI: JSONFormatter class formats single-line JSON, setup_logging() configures root logger, quiet uvicorn.access and httpx at WARNING. Middleware adds request_id to all logs. Grafana LogQL queries: `{container="sgos-xhosa-app"} | json | level="error"` for errors, `| json | duration_ms > 500` for slow requests, `| json | user_id="email"` for user activity, `| json | order_id=N` for order lookup, `sum(rate({server="hornbill"} | json | level="error" [5m])) by (container)` for error rate. Error tracking via GlitchTip/Sentry SDK (dsn: glitchtip.sgl.as). Don'ts: no sensitive data (passwords, tokens, card numbers), no unnecessary PII, no print(), no logging in tight loops.
 
 ---
 ## Architecture
