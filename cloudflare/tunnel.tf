@@ -90,6 +90,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "hornbill" {
       hostname = "phone.sgl.as"
       service  = "http://localhost:9000"
     }
+    ingress_rule {
+      hostname = "docflow.sgl.as"
+      service  = "http://localhost:9000"
+    }
     # Add more SGOS apps here as they're deployed
     ingress_rule {
       service = "http_status:404"

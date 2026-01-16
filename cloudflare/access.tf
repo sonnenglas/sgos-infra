@@ -133,9 +133,29 @@ resource "cloudflare_zero_trust_access_policy" "sgos_status_google" {
 }
 
 # =============================================================================
-# Docflow Webhooks (bypass for services that can't send auth headers)
-# Note: Main docflow Access app is managed manually in Cloudflare dashboard
+# Docflow - Document Management
 # =============================================================================
+
+# Docflow main application - requires Sonnenglas Google login
+resource "cloudflare_zero_trust_access_application" "docflow" {
+  zone_id          = var.cloudflare_zone_id
+  name             = "Docflow"
+  domain           = "docflow.sgl.as"
+  type             = "self_hosted"
+  session_duration = "24h"
+}
+
+resource "cloudflare_zero_trust_access_policy" "docflow_google" {
+  zone_id        = var.cloudflare_zone_id
+  application_id = cloudflare_zero_trust_access_application.docflow.id
+  name           = "Require Sonnenglas Google"
+  precedence     = 1
+  decision       = "allow"
+
+  include {
+    email_domain = ["sonnenglas.net"]
+  }
+}
 
 # Dropscan webhook - bypasses Zero Trust (token auth at app level)
 resource "cloudflare_zero_trust_access_application" "docflow_dropscan" {

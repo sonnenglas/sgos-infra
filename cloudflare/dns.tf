@@ -106,3 +106,12 @@ resource "cloudflare_record" "phone" {
   type    = "CNAME"
   proxied = true
 }
+
+# Docflow - Document Management (Zero Trust + Dropscan webhook bypass)
+resource "cloudflare_record" "docflow" {
+  zone_id = var.cloudflare_zone_id
+  name    = "docflow"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.hornbill.id}.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
