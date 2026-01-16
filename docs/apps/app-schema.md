@@ -86,19 +86,32 @@ This enables the maintenance mode proxy. See [Deployment](../infrastructure/depl
 
 Apps must define a Docker healthcheck so the deployment script can verify the app started successfully. The deployment waits for Docker to report the container as "healthy" before exiting maintenance mode.
 
+### Python Apps (Recommended)
+
+Use Python's built-in urllib for health checks. This avoids adding curl/wget to the container image:
+
 ```yaml
 services:
   myapp:
     build: .
     container_name: sgos-myapp
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 60s  # Grace period for migrations
     # ...
 ```
+
+### Alternative (if curl is installed)
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+```
+
+### Parameters
 
 | Parameter | Description |
 |-----------|-------------|
