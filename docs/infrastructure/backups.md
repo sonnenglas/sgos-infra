@@ -49,6 +49,7 @@ Cloudflare R2 (sonnenglas-backups) ← Offsite storage
 | App | Data |
 |-----|------|
 | sgos-phone | PostgreSQL database, voicemail MP3s |
+| sgos-docflow | PostgreSQL database (documents, metadata), uploaded files |
 
 ## Not Backed Up
 
@@ -59,13 +60,24 @@ Cloudflare R2 (sonnenglas-backups) ← Offsite storage
 
 ## Files
 
+### Infrastructure Repo (source of truth)
+
 | Path | Purpose |
 |------|---------|
-| `/srv/services/backups/.env` | R2 credentials, restic password |
-| `/srv/services/backups/backup-orchestrator.sh` | Main orchestrator script |
+| `toucan/backups/backup-orchestrator.sh` | Main orchestrator script |
+| `toucan/backups/.env.sops` | Encrypted R2 credentials, restic password |
+
+### On Toucan (deployed)
+
+| Path | Purpose |
+|------|---------|
+| `/srv/services/backups/backup-orchestrator.sh` | Deployed orchestrator |
+| `/srv/services/backups/.env` | Decrypted secrets |
 | `/srv/backups/staging/` | Collected backups before R2 sync |
 | `/srv/backups/status.json` | Latest backup status per app |
 | `/srv/backups/backup.log` | Backup run log |
+
+The orchestrator and secrets are deployed automatically when pushing to main via the infra webhook.
 
 ---
 
@@ -186,7 +198,44 @@ scp /tmp/restore/srv/backups/staging/sgos-phone/voicemails/*.mp3 \
     stefan@hornbill:/srv/apps/sgos-phone/data/voicemails/
 ```
 
-### Example 3: Restore from Specific Date
+### Example 3: Restore Docflow Database and Files
+
+```bash
+# On Toucan - prepare restic
+cd /srv/services/backups
+source .env
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
+
+# Restore latest docflow backup
+restic restore latest --target /tmp/restore --include "sgos-docflow"
+
+# Copy to Hornbill
+scp -r /tmp/restore/srv/backups/staging/sgos-docflow/* stefan@hornbill:/tmp/docflow-restore/
+
+# On Hornbill - restore
+ssh stefan@hornbill
+cd /srv/apps/sgos-docflow
+
+# Stop app
+docker compose stop app worker
+
+# Restore database (pg_restore for custom format)
+docker exec -i sgos-docflow-db pg_restore -U docflow -d docflow -c < /tmp/docflow-restore/database.dump
+
+# Restore files volume
+docker run --rm \
+  -v sgos-docflow_docflow_files:/data \
+  -v /tmp/docflow-restore:/backup \
+  alpine tar xzf /backup/files.tar.gz -C /data
+
+# Restart
+docker compose up -d app worker
+
+# Cleanup
+rm -rf /tmp/docflow-restore
+```
+
+### Example 4: Restore from Specific Date
 
 ```bash
 # List snapshots with timestamps
@@ -253,4 +302,14 @@ docker exec -i sgos-phone-db psql -U postgres -c "DROP DATABASE phone_test;"
 
 1. Create `backup.sh` in the app repo (runs on app server)
 2. Add `scripts.backup` and `sgos.backup.output` to `app.json`
-3. Add the app to `/srv/services/backups/backup-orchestrator.sh` on Toucan
+3. Add the app to `toucan/backups/backup-orchestrator.sh` in this repo:
+
+```bash
+# Add this block to the orchestrator
+if ! backup_app "sgos-newapp" "hornbill" "$HORNBILL"; then
+    BACKUP_ERRORS=$((BACKUP_ERRORS + 1))
+fi
+```
+
+4. Update the restic status loop to include the new app
+5. Commit and push - the deploy webhook will sync to Toucan
