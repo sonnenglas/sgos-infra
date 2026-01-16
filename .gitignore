@@ -1,11 +1,9 @@
-# Dependencies
-node_modules/
+# Docusaurus (in site/)
+site/node_modules/
+site/build/
+site/.docusaurus/
 .pnp
 .pnp.js
-
-# Build output
-build/
-.docusaurus/
 
 # Misc
 .DS_Store

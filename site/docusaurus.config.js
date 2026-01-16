@@ -29,6 +29,7 @@ const config = {
       {
         hashed: true,
         docsRouteBasePath: '/',
+        docsDir: '../docs',
         indexBlog: false,
       },
     ],
@@ -40,6 +41,7 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          path: '../docs',
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
         },
