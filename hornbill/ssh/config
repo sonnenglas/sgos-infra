@@ -1,0 +1,23 @@
+# GitHub deploy key configuration for Hornbill
+# Each repo needs its own deploy key (GitHub limitation)
+
+# Docflow repo
+Host github-docflow
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/github_deploy
+    IdentitiesOnly yes
+
+# Phone repo
+Host github-phone
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/github_phone
+    IdentitiesOnly yes
+
+# Add more repos here as needed:
+# Host github-newapp
+#     HostName github.com
+#     User git
+#     IdentityFile ~/.ssh/github_newapp
+#     IdentitiesOnly yes

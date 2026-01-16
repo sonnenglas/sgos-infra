@@ -58,6 +58,33 @@ echo "=== Syncing proxy configurations ==="
 cp "$INFRA_DIR/proxy/toucan/nginx.conf" /srv/proxy/toucan/nginx.conf 2>/dev/null || true
 cp "$INFRA_DIR/proxy/toucan/maintenance.html" /srv/proxy/toucan/maintenance.html 2>/dev/null || true
 
+echo "=== Syncing SSH deploy keys to Hornbill ==="
+HORNBILL="stefan@100.67.57.25"
+SSH_KEY="/root/.ssh/deploy_hornbill"
+SOPS_AGE="/home/stefan/.config/sops/age"
+HORNBILL_SSH="/home/stefan/.ssh"
+
+# Ensure .ssh directory exists on Hornbill
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$HORNBILL" "mkdir -p $HORNBILL_SSH && chmod 700 $HORNBILL_SSH"
+
+# Copy SSH config (plain text)
+scp -i "$SSH_KEY" -o StrictHostKeyChecking=no "$INFRA_DIR/hornbill/ssh/config" "$HORNBILL:$HORNBILL_SSH/config"
+
+# Decrypt and copy deploy keys
+for key in github_deploy github_phone; do
+    docker run --rm \
+      -v "$INFRA_DIR":/repo \
+      -v "$SOPS_AGE":/root/.config/sops/age:ro \
+      ghcr.io/getsops/sops:latest \
+      -d "/repo/hornbill/ssh/${key}.sops" > "/tmp/${key}"
+
+    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no "/tmp/${key}" "$HORNBILL:$HORNBILL_SSH/${key}"
+    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$HORNBILL" "chmod 600 $HORNBILL_SSH/${key}"
+    rm -f "/tmp/${key}"
+done
+
+echo "  SSH keys synced to Hornbill"
+
 echo "=== Rebuilding docs container ==="
 GIT_COMMIT=$GIT_COMMIT docker compose -f "$COMPOSE_FILE" up -d --build docs
 
@@ -73,3 +100,4 @@ echo "Components deployed:"
 echo "  - Documentation site"
 echo "  - Backup orchestrator"
 echo "  - Proxy configurations"
+echo "  - Hornbill SSH deploy keys"

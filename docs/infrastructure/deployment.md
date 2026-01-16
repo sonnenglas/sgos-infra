@@ -62,7 +62,74 @@ Every webhook request is validated:
 |---------|------------|--------|--------|
 | `deploy-sgos-infra` | sonnenglas/sgos-infra | Toucan | `deploy-sgos-infra.sh` |
 | `deploy-sgos-phone` | sonnenglas/sgos-phone | Hornbill | `deploy-sgos-phone.sh` |
+| `deploy-sgos-docflow` | sonnenglas/sgos-docflow | Hornbill | `deploy-sgos-docflow.sh` |
 | `deploy-sgos-sangoma` | sonnenglas/sgos-sangoma | Toucan | `deploy-sgos-sangoma.sh` |
+
+---
+
+## SSH Deploy Keys
+
+Hornbill needs SSH access to GitHub to pull app repos during deployment. Keys are managed as code in this repo and deployed automatically.
+
+### How It Works
+
+```
+infra repo                    Toucan                      Hornbill
+┌──────────────────┐         ┌──────────────┐            ┌────────────────┐
+│ hornbill/ssh/    │         │              │            │ ~/.ssh/        │
+│ ├── config       │──push──▶│ infra deploy │───SSH────▶│ ├── config     │
+│ ├── github_*.sops│         │ (decrypts)   │   copy    │ ├── github_*   │
+└──────────────────┘         └──────────────┘            └────────────────┘
+```
+
+### Files (in this repo)
+
+| File | Purpose |
+|------|---------|
+| `hornbill/ssh/config` | SSH host aliases for each repo |
+| `hornbill/ssh/github_deploy.sops` | Encrypted deploy key for docflow |
+| `hornbill/ssh/github_phone.sops` | Encrypted deploy key for phone |
+
+### Why Per-Repo Keys?
+
+GitHub doesn't allow the same deploy key on multiple repos. Each repo needs its own key with a corresponding SSH host alias:
+
+```
+# In SSH config
+Host github-docflow          # Used in git remote URL
+    HostName github.com
+    IdentityFile ~/.ssh/github_deploy
+
+# Git remote uses alias
+origin  git@github-docflow:sonnenglas/sgos-docflow.git
+```
+
+### Adding a Key for a New App
+
+1. Generate key on Hornbill:
+   ```bash
+   ssh-keygen -t ed25519 -C "hornbill-newapp" -f ~/.ssh/github_newapp -N ''
+   ```
+
+2. Add as deploy key on GitHub repo (read-only)
+
+3. Copy private key to this repo and encrypt:
+   ```bash
+   scp hornbill:~/.ssh/github_newapp /tmp/
+   cp /tmp/github_newapp hornbill/ssh/github_newapp.sops
+   sops -e -i hornbill/ssh/github_newapp.sops
+   rm /tmp/github_newapp
+   ```
+
+4. Add host alias to `hornbill/ssh/config`
+
+5. Update git remote on Hornbill:
+   ```bash
+   cd /srv/apps/sgos-newapp/src
+   git remote set-url origin git@github-newapp:sonnenglas/sgos-newapp.git
+   ```
+
+6. Push to main - keys deploy automatically
 
 ---
 
@@ -317,9 +384,20 @@ docker network connect sgos <container>  # if missing
 
 ## Files
 
+### Infrastructure Repo (source of truth)
+
 | Path | Purpose |
 |------|---------|
-| `/srv/services/webhook/hooks.json` | Hook definitions |
-| `/srv/services/webhook/scripts/` | Deploy scripts |
-| `/srv/proxy/*/nginx.conf` | Proxy configuration |
-| `/srv/proxy/*/flags/` | Maintenance flag files |
+| `webhook/hooks.json` | Hook definitions |
+| `webhook/scripts/` | Deploy scripts |
+| `hornbill/ssh/` | SSH deploy keys (encrypted) |
+| `proxy/*/nginx.conf` | Proxy configuration |
+
+### On Servers (deployed)
+
+| Path | Server | Purpose |
+|------|--------|---------|
+| `/srv/services/sgos-infra/` | Toucan | Cloned infra repo |
+| `/srv/proxy/*/nginx.conf` | Both | Proxy configuration |
+| `/srv/proxy/*/flags/` | Both | Maintenance flag files |
+| `/home/stefan/.ssh/github_*` | Hornbill | Decrypted deploy keys |
