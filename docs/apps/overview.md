@@ -68,7 +68,7 @@ Single source of truth for all orders and their state. Handles VAT calculation, 
 |----------|-------|
 | **System** | `sgos-docflow` |
 | **Domain** | [docflow.sgl.as](https://docflow.sgl.as) |
-| **Status** | Planned |
+| **Status** | Live |
 
 All incoming documents as structured data. Mail, contracts, invoices. Think Paperless-NGX on steroids.
 

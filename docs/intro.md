@@ -42,7 +42,7 @@ All business applications built on the SGOS platform.
 |-----|-------------|--------|--------|
 | **Phone** | Voicemail processing & notifications · `sgos-phone` | [phone.sgl.as](https://phone.sgl.as) | 🟢 Live |
 | **Ikhaya** | Internal knowledge base · `sgos-ikhaya` | [ikhaya.sgl.as](https://ikhaya.sgl.as) | 🟢 Live |
-| **Docflow** | Document management (invoices, contracts) · `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | 🟡 Beta |
+| **Docflow** | Document management (invoices, contracts) · `sgos-docflow` | [docflow.sgl.as](https://docflow.sgl.as) | 🟢 Live |
 | **Ufudu** | Warehouse fulfillment (pick/pack) · `sgos-ufudu` | [ufudu.sgl.as](https://ufudu.sgl.as) | 🟡 Beta |
 | **Accounting** | Financial transactions, VAT, exports · `sgos-accounting` | [accounting.sgl.as](https://accounting.sgl.as) | 🟠 Alpha |
 | **Inventory** | Stock management & quantities · `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | 🟠 Alpha |
