@@ -144,13 +144,10 @@ How SGOS apps communicate with each other securely without going through Cloudfl
 │                                                                          │
 │   Hornbill (100.67.57.25)              Toucan (100.102.199.98)          │
 │   ┌────────────────────────┐           ┌────────────────────────┐       │
-│   │  Docker network: sgos  │           │  Docker network: sgos  │       │
-│   │  ┌──────────────────┐  │           │  ┌──────────────────┐  │       │
-│   │  │ sgos-phone-app   │  │           │  │ sgos-sangoma-app │  │       │
-│   │  │ sgos-xhosa-app   │◀─┼───────────┼─▶│ monitoring       │  │       │
-│   │  │ sgos-directory   │  │ Tailscale │  │                  │  │       │
-│   │  │ sgos-docflow-app │  │           │  │                  │  │       │
-│   │  └──────────────────┘  │           │  └──────────────────┘  │       │
+│   │ sgos-phone       :8003 │           │ sgos-sangoma     :8001 │       │
+│   │ sgos-xhosa       :8002 │◀─────────▶│ monitoring             │       │
+│   │ sgos-directory   :8001 │ Tailscale │                        │       │
+│   │ sgos-docflow     :8004 │  (always) │                        │       │
 │   └────────────────────────┘           └────────────────────────┘       │
 └──────────────────────────────────────────────────────────────────────────┘
                     │
@@ -159,15 +156,36 @@ How SGOS apps communicate with each other securely without going through Cloudfl
             Cloudflare Tunnel
 ```
 
+All internal communication uses Tailscale IPs, even between apps on the same server. This keeps things simple - one URL pattern everywhere.
+
 ### URL Patterns
 
 | Scenario | URL Pattern | Network |
 |----------|-------------|---------|
-| Same server | `http://sgos-<app>-app:8000` | Docker network |
-| Cross-server | `http://100.x.x.x:8000` | Tailscale |
+| Internal (any server) | `http://100.x.x.x:8000` | Tailscale |
 | External users | `https://<app>.sgl.as` | Cloudflare |
 
+**Why Tailscale for everything (even same-server)?**
+- One URL per service - works anywhere, no special cases
+- Apps can move between servers without config changes
+- WireGuard overhead is negligible (kernel-level, very fast)
+- Simpler mental model
+
 **Important:** Internal apps NEVER call each other through Cloudflare (`*.sgl.as`). That would route traffic through the internet unnecessarily.
+
+### Service Registry
+
+Central reference for internal service URLs:
+
+| Service | Tailscale URL | Server |
+|---------|---------------|--------|
+| Directory | `http://100.67.57.25:8001` | Hornbill |
+| Xhosa | `http://100.67.57.25:8002` | Hornbill |
+| Phone | `http://100.67.57.25:8003` | Hornbill |
+| Docflow | `http://100.67.57.25:8004` | Hornbill |
+| Sangoma | `http://100.102.199.98:8001` | Toucan |
+
+*Ports are examples - assign as needed.*
 
 ### Configuration Example
 
@@ -176,12 +194,10 @@ Each app configures internal URLs for services it depends on:
 ```bash
 # .env for sgos-phone (on Hornbill)
 
-# Same-server apps (Docker network)
-DIRECTORY_URL=http://sgos-directory-app:8000
-XHOSA_URL=http://sgos-xhosa-app:8000
-
-# Cross-server apps (Tailscale)
-SANGOMA_URL=http://100.102.199.98:8000
+# All internal services use Tailscale IPs
+DIRECTORY_URL=http://100.67.57.25:8001
+XHOSA_URL=http://100.67.57.25:8002
+SANGOMA_URL=http://100.102.199.98:8001
 
 # Shared secret for internal API auth
 INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
@@ -198,9 +214,7 @@ Two-layer security for internal APIs:
 
 #### IP Verification
 
-Internal APIs only accept requests from:
-- Docker network IPs (`172.16.0.0/12`)
-- Tailscale IPs (`100.64.0.0/10`)
+Internal APIs only accept requests from Tailscale IPs (`100.64.0.0/10`).
 
 #### Token Verification
 
@@ -219,11 +233,8 @@ from fastapi import Request, HTTPException
 import ipaddress
 import os
 
-ALLOWED_NETWORKS = [
-    ipaddress.ip_network("172.16.0.0/12"),   # Docker
-    ipaddress.ip_network("100.64.0.0/10"),   # Tailscale
-    ipaddress.ip_network("127.0.0.0/8"),     # Localhost
-]
+# Tailscale uses the CGNAT range (100.64.0.0/10)
+TAILSCALE_NETWORK = ipaddress.ip_network("100.64.0.0/10")
 
 def get_client_ip(request: Request) -> str:
     """Get real client IP, handling proxies."""
@@ -236,9 +247,9 @@ async def verify_internal_request(request: Request):
     """Verify request is from internal network with valid token."""
     client_ip = ipaddress.ip_address(get_client_ip(request))
 
-    # Check IP is from allowed network
-    if not any(client_ip in network for network in ALLOWED_NETWORKS):
-        raise HTTPException(status_code=403, detail="Forbidden: External IP")
+    # Check IP is from Tailscale network
+    if client_ip not in TAILSCALE_NETWORK:
+        raise HTTPException(status_code=403, detail="Forbidden: Not from Tailscale")
 
     # Check token
     token = request.headers.get("X-Internal-Token")
@@ -297,5 +308,4 @@ openssl rand -base64 32
 | Access Type | Network Path | Auth Method |
 |-------------|--------------|-------------|
 | User → App | Internet → Cloudflare → Tunnel | Cloudflare Zero Trust |
-| App → App (same server) | Docker network | IP check + token |
-| App → App (cross-server) | Tailscale | IP check + token |
+| App → App | Tailscale (always) | Tailscale IP check + token |
