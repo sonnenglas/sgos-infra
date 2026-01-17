@@ -27,7 +27,7 @@ resource "cloudflare_zero_trust_access_policy" "sgos_infra_google" {
 # Monitoring Services
 # =============================================================================
 
-# Homepage Dashboard
+# Homepage Dashboard - IT Admins only
 resource "cloudflare_zero_trust_access_application" "dashboard" {
   zone_id          = var.cloudflare_zone_id
   name             = "Dashboard"
@@ -39,12 +39,12 @@ resource "cloudflare_zero_trust_access_application" "dashboard" {
 resource "cloudflare_zero_trust_access_policy" "dashboard_google" {
   zone_id        = var.cloudflare_zone_id
   application_id = cloudflare_zero_trust_access_application.dashboard.id
-  name           = "Require Sonnenglas Google"
+  name           = "IT Admins Only"
   precedence     = 1
   decision       = "allow"
 
   include {
-    email_domain = ["sonnenglas.net"]
+    email = ["stefan@sonnenglas.net", "przemek@sonnenglas.net"]
   }
 }
 
@@ -136,25 +136,13 @@ resource "cloudflare_zero_trust_access_policy" "sgos_status_google" {
 # Docflow - Document Management
 # =============================================================================
 
-# Docflow main application - requires Sonnenglas Google login
+# Docflow main application - uses reusable policies (All @sonnenglas.net Users)
 resource "cloudflare_zero_trust_access_application" "docflow" {
   zone_id          = var.cloudflare_zone_id
-  name             = "Docflow"
+  name             = "docflow"
   domain           = "docflow.sgl.as"
   type             = "self_hosted"
-  session_duration = "24h"
-}
-
-resource "cloudflare_zero_trust_access_policy" "docflow_google" {
-  zone_id        = var.cloudflare_zone_id
-  application_id = cloudflare_zero_trust_access_application.docflow.id
-  name           = "Require Sonnenglas Google"
-  precedence     = 1
-  decision       = "allow"
-
-  include {
-    email_domain = ["sonnenglas.net"]
-  }
+  session_duration = "730h"  # 1 month, matching Cloudflare
 }
 
 # Dropscan webhook - bypasses Zero Trust (token auth at app level)
