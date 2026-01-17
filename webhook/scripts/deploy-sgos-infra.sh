@@ -51,7 +51,7 @@ docker run --rm \
   -v "$INFRA_DIR":/repo \
   -v "$BACKUPS_DIR":/output \
   -v /home/stefan/.config/sops/age:/root/.config/sops/age:ro \
-  ghcr.io/getsops/sops:latest \
+  ghcr.io/getsops/sops:v3.11.0-alpine \
   -d --output-type dotenv --output /output/.env /repo/toucan/backups/.env.sops
 
 echo "=== Syncing proxy configurations ==="
@@ -75,7 +75,7 @@ for key in github_deploy github_phone; do
     docker run --rm \
       -v "$INFRA_DIR":/repo \
       -v "$SOPS_AGE":/root/.config/sops/age:ro \
-      ghcr.io/getsops/sops:latest \
+      ghcr.io/getsops/sops:v3.11.0-alpine \
       -d "/repo/hornbill/ssh/${key}.sops" > "/tmp/${key}"
 
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=no "/tmp/${key}" "$HORNBILL:$HORNBILL_SSH/${key}"
