@@ -31,7 +31,7 @@ docker run --rm \
   -v "$INFRA_DIR":/repo \
   -w /repo \
   --entrypoint sh \
-  alpine/git -c "git config --global --add safe.directory /repo && git pull --ff-only origin main"
+  alpine/git -c "git config --global --add safe.directory /repo && git fetch origin && git reset --hard origin/main"
 
 echo "=== Getting commit hash ==="
 GIT_COMMIT=$(docker run --rm \
