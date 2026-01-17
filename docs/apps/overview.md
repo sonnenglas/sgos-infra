@@ -36,7 +36,7 @@ Voicemail processing and notification system. Records phone calls, transcribes t
 
 ---
 
-### Xhosa (Order Management)
+### Xhosa (Order Management & CRM)
 
 | Property | Value |
 |----------|-------|
@@ -44,13 +44,19 @@ Voicemail processing and notification system. Records phone calls, transcribes t
 | **Domain** | [xhosa.sgl.as](https://xhosa.sgl.as) |
 | **Status** | Planned |
 
-Single source of truth for all orders and their state. Handles VAT calculation, invoicing, forecasting, demand planning, and serves as partial CRM (all customer data).
+Single source of truth for all orders, customers, and their state. Combines order management with full CRM capabilities.
+
+**Order Management:** VAT calculation, invoicing, forecasting, demand planning.
+
+**CRM (Customer Data):** All customer data lives here — B2C and B2B. Customers are tightly coupled with orders, so they belong together. Includes contact info, shipping addresses, order history, notes, segments, and credit limits.
+
+**B2B Authentication:** Partner Portal and Website authenticate B2B customers against Xhosa. Xhosa provides customer login endpoints and order access APIs.
 
 | | |
 |---|---|
 | **Input** | Website (via Stripe), Amazon Import, Platform Sales Channels, Partner Portal (B2B), Users (staff) |
-| **Output** | API |
-| **Connections** | Human in the Soup, Accounting, Ufudu, Inventory, Stripe |
+| **Output** | API, Customer Portal APIs |
+| **Connections** | Human in the Soup, Accounting, Ufudu, Inventory, Stripe, Partner Portal, Website |
 
 **APIs:**
 
@@ -328,7 +334,9 @@ Internal knowledge base and blog (Docusaurus project). Contains all company know
 | **Domain** | [directory.sgl.as](https://directory.sgl.as) |
 | **Status** | Planned |
 
-A user directory exposed as a simple API so all apps know: Who is who. Central management of users and their attributes. Apps still manage access control and permissions individually.
+Internal employee directory exposed as a simple API so all apps know: Who works here. Central management of staff users and their attributes. Apps still manage access control and permissions individually.
+
+**Note:** This is for internal users (employees) only. Customer data lives in Xhosa (CRM).
 
 | | |
 |---|---|

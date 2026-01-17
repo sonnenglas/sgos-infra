@@ -48,7 +48,7 @@ All business applications built on the SGOS platform.
 | **Inventory** | Stock management & quantities · `sgos-inventory` | [inventory.sgl.as](https://inventory.sgl.as) | 🟠 Alpha |
 | **Baobab** | Product master, brands, listings · `sgos-baobab` | [baobab.sgl.as](https://baobab.sgl.as) | 🔵 Concept |
 | **Directory** | User directory for all apps · `sgos-directory` | [directory.sgl.as](https://directory.sgl.as) | 🟠 Alpha |
-| **Xhosa** | Order management, CRM, invoicing · `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | 🔵 Concept |
+| **Xhosa** | Orders, customers (CRM), invoicing · `sgos-xhosa` | [xhosa.sgl.as](https://xhosa.sgl.as) | 🔵 Concept |
 | **Soup** | Central to-do lists, task management · `sgos-soup` | [soup.sgl.as](https://soup.sgl.as) | 🔵 Concept |
 | **Anansi** | Internal AI chatbot & assistant · `sgos-anansi` | [anansi.sgl.as](https://anansi.sgl.as) | 🔵 Concept |
 | **Clock** | Time tracking & attendance · `sgos-clock` | [clock.sgl.as](https://clock.sgl.as) | 🔵 Concept |
