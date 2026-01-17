@@ -129,3 +129,173 @@ The committed `openapi.json` is the contract.
 | Change field type | **New version (v2)** |
 
 Breaking changes require a new version with deprecation period for the old version.
+
+---
+
+## Internal Service Communication
+
+How SGOS apps communicate with each other securely without going through Cloudflare.
+
+### Network Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           Tailscale Network                              │
+│                                                                          │
+│   Hornbill (100.67.57.25)              Toucan (100.102.199.98)          │
+│   ┌────────────────────────┐           ┌────────────────────────┐       │
+│   │  Docker network: sgos  │           │  Docker network: sgos  │       │
+│   │  ┌──────────────────┐  │           │  ┌──────────────────┐  │       │
+│   │  │ sgos-phone-app   │  │           │  │ sgos-sangoma-app │  │       │
+│   │  │ sgos-xhosa-app   │◀─┼───────────┼─▶│ monitoring       │  │       │
+│   │  │ sgos-directory   │  │ Tailscale │  │                  │  │       │
+│   │  │ sgos-docflow-app │  │           │  │                  │  │       │
+│   │  └──────────────────┘  │           │  └──────────────────┘  │       │
+│   └────────────────────────┘           └────────────────────────┘       │
+└──────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (external users only)
+                    ▼
+            Cloudflare Tunnel
+```
+
+### URL Patterns
+
+| Scenario | URL Pattern | Network |
+|----------|-------------|---------|
+| Same server | `http://sgos-<app>-app:8000` | Docker network |
+| Cross-server | `http://100.x.x.x:8000` | Tailscale |
+| External users | `https://<app>.sgl.as` | Cloudflare |
+
+**Important:** Internal apps NEVER call each other through Cloudflare (`*.sgl.as`). That would route traffic through the internet unnecessarily.
+
+### Configuration Example
+
+Each app configures internal URLs for services it depends on:
+
+```bash
+# .env for sgos-phone (on Hornbill)
+
+# Same-server apps (Docker network)
+DIRECTORY_URL=http://sgos-directory-app:8000
+XHOSA_URL=http://sgos-xhosa-app:8000
+
+# Cross-server apps (Tailscale)
+SANGOMA_URL=http://100.102.199.98:8000
+
+# Shared secret for internal API auth
+INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+```
+
+### Internal API Authentication
+
+Two-layer security for internal APIs:
+
+| Layer | Purpose | Protects against |
+|-------|---------|------------------|
+| **Network** | Only Tailscale/Docker IPs can reach internal APIs | External attackers |
+| **Token** | Shared secret in header | Rogue processes on trusted servers |
+
+#### IP Verification
+
+Internal APIs only accept requests from:
+- Docker network IPs (`172.16.0.0/12`)
+- Tailscale IPs (`100.64.0.0/10`)
+
+#### Token Verification
+
+All internal API calls include a shared token:
+
+```
+X-Internal-Token: <shared-secret>
+```
+
+The token is stored in each app's `.env` (encrypted via SOPS) and rotated periodically.
+
+#### Middleware Implementation
+
+```python
+from fastapi import Request, HTTPException
+import ipaddress
+import os
+
+ALLOWED_NETWORKS = [
+    ipaddress.ip_network("172.16.0.0/12"),   # Docker
+    ipaddress.ip_network("100.64.0.0/10"),   # Tailscale
+    ipaddress.ip_network("127.0.0.0/8"),     # Localhost
+]
+
+def get_client_ip(request: Request) -> str:
+    """Get real client IP, handling proxies."""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host
+
+async def verify_internal_request(request: Request):
+    """Verify request is from internal network with valid token."""
+    client_ip = ipaddress.ip_address(get_client_ip(request))
+
+    # Check IP is from allowed network
+    if not any(client_ip in network for network in ALLOWED_NETWORKS):
+        raise HTTPException(status_code=403, detail="Forbidden: External IP")
+
+    # Check token
+    token = request.headers.get("X-Internal-Token")
+    if token != os.environ.get("INTERNAL_API_TOKEN"):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid token")
+
+# Apply to internal API routes
+@internal_v1.middleware("http")
+async def internal_auth_middleware(request: Request, call_next):
+    await verify_internal_request(request)
+    return await call_next(request)
+```
+
+#### Making Internal API Calls
+
+```python
+import httpx
+import os
+
+class InternalClient:
+    def __init__(self, base_url: str):
+        self.base_url = base_url
+        self.headers = {
+            "X-Internal-Token": os.environ["INTERNAL_API_TOKEN"]
+        }
+
+    async def get(self, path: str):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.base_url}{path}",
+                headers=self.headers
+            )
+            response.raise_for_status()
+            return response.json()
+
+# Usage
+directory = InternalClient(os.environ["DIRECTORY_URL"])
+user = await directory.get("/api/int/v1/users/stefan@sonnenglas.net")
+```
+
+### Token Management
+
+The `INTERNAL_API_TOKEN` is:
+- Generated once, shared across all apps
+- Stored encrypted in each app's `.env.sops`
+- Rotated by updating all `.env.sops` files and redeploying
+
+To generate a new token:
+
+```bash
+openssl rand -base64 32
+```
+
+### Summary
+
+| Access Type | Network Path | Auth Method |
+|-------------|--------------|-------------|
+| User → App | Internet → Cloudflare → Tunnel | Cloudflare Zero Trust |
+| App → App (same server) | Docker network | IP check + token |
+| App → App (cross-server) | Tailscale | IP check + token |
